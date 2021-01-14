@@ -1,0 +1,1 @@
+"./CodeStartBranch.obj" "./IQsample.obj" "D:/work/DSP/ProgramBomb/ProgramBombDebug/math/IQmath/v160/examples_ccsv4/cmd/28335_IQmath_lnk.cmd" -lrts2800_fpu32.lib -lIQmath_fpu32.lib 

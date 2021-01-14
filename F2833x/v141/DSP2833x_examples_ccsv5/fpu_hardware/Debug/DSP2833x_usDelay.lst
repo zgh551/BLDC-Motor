@@ -1,0 +1,91 @@
+TMS320C2000 Assembler PC v15.12.1 Sat Jun 25 21:32:08 2016
+
+Tools Copyright (c) 1996-2015 Texas Instruments Incorporated
+D:/work/DSP/Steering_Engine/F2833x/v141/DSP2833x_common/source/DSP2833x_usDelay.asm PAGE    1
+
+       1              ;// TI File $Revision: /main/4 $
+       2              ;// Checkin $Date: July 30, 2007   10:28:57 $
+       3              ;//###########################################################################
+       4              ;//
+       5              ;// FILE:  DSP2833x_usDelay.asm
+       6              ;//
+       7              ;// TITLE: Simple delay function
+       8              ;//
+       9              ;// DESCRIPTION:
+      10              ;//  
+      11              ;// This is a simple delay function that can be used to insert a specified
+      12              ;// delay into code.  
+      13              ;// 
+      14              ;// This function is only accurate if executed from internal zero-waitstate
+      15              ;// SARAM. If it is executed from waitstate memory then the delay will be
+      16              ;// longer then specified. 
+      17              ;// 
+      18              ;// To use this function:
+      19              ;//
+      20              ;//  1 - update the CPU clock speed in the DSP2833x_Examples.h
+      21              ;//    file. For example:
+      22              ;//    #define CPU_RATE 6.667L // for a 150MHz CPU clock speed
+      23              ;//    or #define CPU_RATE 10.000L // for a 100MHz CPU clock speed 
+      24              ;//
+      25              ;//  2 - Call this function by using the DELAY_US(A) macro
+      26              ;//    that is defined in the DSP2833x_Examples.h file.  This macro
+      27              ;//    will convert the number of microseconds specified
+      28              ;//    into a loop count for use with this function.  
+      29              ;//    This count will be based on the CPU frequency you specify.
+      30              ;//
+      31              ;//  3 - For the most accurate delay 
+      32              ;//    - Execute this function in 0 waitstate RAM.  
+      33              ;//    - Disable interrupts before calling the function
+      34              ;//      If you do not disable interrupts, then think of
+      35              ;//      this as an "at least" delay function as the actual
+      36              ;//      delay may be longer. 
+      37              ;//
+      38              ;//  The C assembly call from the DELAY_US(time) macro will
+      39              ;//  look as follows: 
+      40              ;//
+      41              ;//  extern void Delay(long LoopCount);                
+      42              ;//
+      43              ;//        MOV   AL,#LowLoopCount
+      44              ;//        MOV   AH,#HighLoopCount
+      45              ;//        LCR   _Delay
+      46              ;//
+      47              ;//  Or as follows (if count is less then 16-bits):
+      48              ;//
+      49              ;//        MOV   ACC,#LoopCount
+      50              ;//        LCR   _Delay
+      51              ;//
+      52              ;//
+      53              ;//###########################################################################
+      54              ;// $TI Release: F2833x/F2823x Header Files and Peripheral Examples V141 $
+      55              ;// $Release Date: November  6, 2015 $
+TMS320C2000 Assembler PC v15.12.1 Sat Jun 25 21:32:08 2016
+
+Tools Copyright (c) 1996-2015 Texas Instruments Incorporated
+D:/work/DSP/Steering_Engine/F2833x/v141/DSP2833x_common/source/DSP2833x_usDelay.asm PAGE    2
+
+      56              ;// $Copyright: Copyright (C) 2007-2015 Texas Instruments Incorporated -
+      57              ;//             http://www.ti.com/ ALL RIGHTS RESERVED $
+      58              ;//###########################################################################  
+      59              
+      60                     .def _DSP28x_usDelay
+      61 00000000              .sect "ramfuncs"
+      62              
+      63                      .global  __DSP28x_usDelay
+      64 00000000       _DSP28x_usDelay:
+      65 00000000 1901          SUB    ACC,#1
+      66 00000001 56C3          BF     _DSP28x_usDelay,GEQ    ;; Loop if ACC >= 0
+         00000002 FFFF 
+      67 00000003 0006          LRETR 
+      68              
+      69              ;There is a 9/10 cycle overhead and each loop
+      70              ;takes five cycles. The LoopCount is given by
+      71              ;the following formula:
+      72              ;  DELAY_CPU_CYCLES = 9 + 5*LoopCount
+      73              ; LoopCount = (DELAY_CPU_CYCLES - 9) / 5
+      74              ; The macro DELAY_US(A) performs this calculation for you
+      75              ;
+      76              ;//===========================================================================
+      77              ;// End of file.
+      78              ;//===========================================================================
+
+No Assembly Errors, No Assembly Warnings

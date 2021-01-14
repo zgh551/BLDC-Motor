@@ -1,0 +1,96 @@
+TMS320C2000 Assembler PC v15.12.1 Mon Aug 29 15:38:15 2016
+
+Tools Copyright (c) 1996-2015 Texas Instruments Incorporated
+D:/work/DSP/ProgramBomb/ProgramBombDebug/math/IQmath/v160/examples_ccsv4/C/source/CodeStartBranch.asm PAGE    1
+
+       1              ;// TI File $Revision: /main/1 $
+       2              ;// Checkin $Date: July 10, 2008   10:33:53 $
+       3              ;//###########################################################################
+       4              ;//
+       5              ;// FILE:  CodeStartBranch.asm  
+       6              ;//
+       7              ;// TITLE: Branch for redirecting code execution after boot. 
+       8              ;//
+       9              ;// For these examples, code_start is the first code that is executed after
+      10              ;// exiting the boot ROM code. 
+      11              ;//
+      12              ;// The codestart section in the linker cmd file is used to physically place
+      13              ;// this code at the correct memory location.  This section should be placed 
+      14              ;// at the location the BOOT ROM will re-direct the code to.  
+      15              ;//
+      16              ;// In addition, the example projects are setup such that the codegen
+      17              ;// entry point is also set to the code_start label.  This is done by linker 
+      18              ;// option -e in the project build options.  When the debugger loads the code,
+      19              ;// it will automatically set the PC to the "entry point" address indicated by
+      20              ;// the -e linker option.  In this case the debugger is simply assigning the PC, 
+      21              ;// it is not the same as a full reset of the device. 
+      22              ;// 
+      23              ;// The compiler may warn that the entry point for the project is other then
+      24              ;//  _c_init00.  _c_init00 is the C environment setup and is run before 
+      25              ;// main() is entered. The code_start code will re-direct the execution 
+      26              ;// to _c_init00 and thus there is no worry and this warning can be ignored. 
+      27              ;// 
+      28              ;//###########################################################################
+      29              ;// $TI Release: Release 1.5c $
+      30              ;// $Release Date: June 8, 2010 $
+      31              ;//###########################################################################
+      32              
+      33              
+      34              ***********************************************************************
+      35              
+      36        0001  WD_DISABLE      .set    1               ;set to 1 to disable WD, else set to 0
+      37              
+      38                  .ref _c_int00
+      39                  .global code_start
+      40              
+      41              ***********************************************************************
+      42              * Function: codestart section
+      43              *
+      44              * Description: Branch to code starting point
+      45              ***********************************************************************
+      46              
+      47 00000000           .sect "codestart"
+      48              
+      49              code_start:
+      50                  .if WD_DISABLE == 1
+      51 00000000 0040'         LB wd_disable       ;Branch to watchdog disable code
+         00000001 0000 
+      52                  .else
+      53                      LB _c_int00         ;Branch to start of boot.asm in RTS library
+      54                  .endif
+TMS320C2000 Assembler PC v15.12.1 Mon Aug 29 15:38:15 2016
+
+Tools Copyright (c) 1996-2015 Texas Instruments Incorporated
+D:/work/DSP/ProgramBomb/ProgramBombDebug/math/IQmath/v160/examples_ccsv4/C/source/CodeStartBranch.asm PAGE    2
+
+      55              
+      56              ;end codestart section
+      57              
+      58              
+      59              ***********************************************************************
+      60              * Function: wd_disable
+      61              *
+      62              * Description: Disables the watchdog timer
+      63              ***********************************************************************
+      64                  .if WD_DISABLE == 1
+      65              
+      66 00000000           .text
+      67 00000000       wd_disable:
+      68 00000000 561F      SETC OBJMODE        ;Set OBJMODE for 28x object code
+      69 00000001 7622      EALLOW              ;Enable EALLOW protected register access
+      70 00000002 B9C0      MOVZ DP, #7029h>>6  ;Set data page for WDCR register
+      71 00000003 2829      MOV @7029h, #0068h  ;Set WDDIS bit in WDCR to disable WD
+         00000004 0068 
+      72 00000005 761A      EDIS                ;Disable EALLOW protected register access
+      73 00000006 0040!     LB _c_int00         ;Branch to start of boot.asm in RTS library
+         00000007 0000 
+      74              
+      75                  .endif
+      76              
+      77              ;end wd_disable
+      78              
+      79              
+      80              
+      81                      .end
+
+No Assembly Errors, No Assembly Warnings

@@ -1,3 +1,7 @@
+./Debug
+./targetConfig
+
+
 # Prerequisites
 *.d
 
