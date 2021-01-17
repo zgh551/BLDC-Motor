@@ -1,7 +1,7 @@
 /*
  * Steering_ADC.c
  *
- *  Created on: 2016Äê3ÔÂ3ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½3ï¿½ï¿½
  *      Author: ZGH
  *      Version:V1.0.0
  */
@@ -50,14 +50,20 @@ void Steering_ADC_Init(void)
    EDIS;
 
 // Specific ADC setup for this example:
-   AdcRegs.ADCTRL1.bit.ACQ_PS         = ADC_SHCLK;// ²ÉÑù±£³ÖÖÜÆÚ
-   AdcRegs.ADCTRL3.bit.ADCCLKPS       = ADC_CKPS; // HCLKÊ±ÖÓ·ÖÆµ
-   AdcRegs.ADCTRL1.bit.SEQ_CASC       = 0;        // 0 Non-Cascaded Mode ²»¼¶Áª
+   AdcRegs.ADCTRL1.bit.ACQ_PS         = ADC_SHCLK;// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+   AdcRegs.ADCTRL3.bit.ADCCLKPS       = ADC_CKPS; // HCLKÊ±ï¿½Ó·ï¿½Æµ
+   AdcRegs.ADCTRL1.bit.SEQ_CASC       = 0;        // 0 Non-Cascaded Mode ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
    AdcRegs.ADCTRL2.bit.INT_ENA_SEQ1   = 0x1;  // Interrupt request by INT_SEQ1 is enabled.
    AdcRegs.ADCTRL2.bit.RST_SEQ1       = 0x1;  // Immediately reset sequencer to state CONV00
    AdcRegs.ADCTRL2.bit.EPWM_SOCA_SEQ1 = 0x1; // Enable SOCA from ePWM to start SEQ1
    AdcRegs.ADCCHSELSEQ1.bit.CONV00    = 0x0;  // Setup ADCINA0 as 1st SEQ1 conv.
    AdcRegs.ADCCHSELSEQ1.bit.CONV01    = 0x1;  // Setup ADCINA1 as 2nd SEQ1 conv.
+
+   AdcRegs.ADCCHSELSEQ2.bit.CONV04    = 0x0;  // Setup ADCINA4 as 1st SEQ2 conv.
+   AdcRegs.ADCCHSELSEQ2.bit.CONV05    = 0x1;  // Setup ADCINA5 as 2nd SEQ2 conv.
+   AdcRegs.ADCCHSELSEQ2.bit.CONV06    = 0x2;  // Setup ADCINA6 as 3td SEQ2 conv.
+   AdcRegs.ADCCHSELSEQ2.bit.CONV07    = 0x3;  // Setup ADCINA7 as 4fr SEQ2 conv.
+
    AdcRegs.ADCMAXCONV.bit.MAX_CONV1   = 1;   // Set up ADC to perform 1 conversions for every SOC
 
 //   AdcRegs.ADCTRL1.bit.CONT_RUN = 0;       // Setup continuous run
@@ -93,33 +99,33 @@ void Steerint_ADC_DMA_Init(void)
 
    DMACH1AddrConfig(DMADest,DMASource);
 
-// Âö³å½áÊø
-// Bsize£º         Ã¿Ò»¸öÂö³å´«µÝµÄ×ÖµÄ¸öÊý£¬Êµ¼ÊÂö³åÊýÎªbsize+1
-// Srcbstep£ºÃ¿´«µÝÒ»¸ö×Öºó£¬Ô´µØÖ·AÔöÁ¿
-// Desbstep£ºÃ¿´«µÝÒ»¸ö×Öºó£¬Ä¿µÄµØÖ·AÔöÁ¿
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// Bsizeï¿½ï¿½         Ã¿Ò»ï¿½ï¿½ï¿½ï¿½ï¿½å´«ï¿½Ýµï¿½ï¿½ÖµÄ¸ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªbsize+1
+// Srcbstepï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Öºï¿½Ô´ï¿½ï¿½Ö·Aï¿½ï¿½ï¿½ï¿½
+// Desbstepï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Öºï¿½Ä¿ï¿½Äµï¿½Ö·Aï¿½ï¿½ï¿½ï¿½
    DMACH1BurstConfig(0,0,1);
 
-// Ö¡½áÊø
-// Tsize£ºÃ¿Ò»Ö¡µÄÂö³å¸öÊý£¬Âö³åµÝ¼õµ½0Ê±£¨¼´Ò»Ö¡´«µÝÍê³É£¬Ò²ÊÇDMA´«µÝÍê³É£©£¬²úÉúDMAÖÐ¶Ï¡£Êµ¼ÊÖ¡ÊýÎªtsize+1
-// Srctstep£ºÃ¿¸öÂö³åµÄ×îºóÒ»¸ö×Ö´«µÝ½áÊøºó£¬Ô´µØÖ·AÔöÁ¿
-// Deststep£ºÃ¿¸öÂö³åµÄ×îºóÒ»¸ö×Ö´«µÝ½áÊøºó£¬Ä¿µÄµØÖ·AÔöÁ¿
-   DMACH1TransferConfig(4,0,1);//Ö¡½áÊøºó£¬ÖØÐÂ¼ÓÔØµØÖ·
+// Ö¡ï¿½ï¿½ï¿½ï¿½
+// Tsizeï¿½ï¿½Ã¿Ò»Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý¼ï¿½ï¿½ï¿½0Ê±ï¿½ï¿½ï¿½ï¿½Ò»Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½Ò²ï¿½ï¿½DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DMAï¿½Ð¶Ï¡ï¿½Êµï¿½ï¿½Ö¡ï¿½ï¿½Îªtsize+1
+// Srctstepï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ö´ï¿½ï¿½Ý½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ö·Aï¿½ï¿½ï¿½ï¿½
+// Deststepï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ö´ï¿½ï¿½Ý½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½Äµï¿½Ö·Aï¿½ï¿½ï¿½ï¿½
+   DMACH1TransferConfig(4,0,1);//Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½Øµï¿½Ö·
 
-// Âö³åÑ­»·
-// Srcwsize£ºµ±ÒÑ¾­´«µÝµÄÂö³åÊýÎªsrcwsize+1µÄÕûÊý±¶Ê±£¬Ô´µØÖ·£¨B£©Ôö¼Ósrcwstep£¨³£Îª0£©£¬²¢×°ÔØÈëÔ´µØÖ·A
-// Deswsize£ºµ±ÒÑ¾­´«µÝµÄÂö³åÊýÎªdeswsize+1µÄÕûÊý±¶Ê±£¬Ä¿µÄµØÖ·£¨B£©Ôö¼Ódeswstep£¨³£Îª0£©£¬²¢×°ÔØÈëÄ¿µÄµØÖ·A
+// ï¿½ï¿½ï¿½ï¿½Ñ­ï¿½ï¿½
+// Srcwsizeï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªsrcwsize+1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ô´ï¿½ï¿½Ö·ï¿½ï¿½Bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½srcwstepï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×°ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ö·A
+// Deswsizeï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªdeswsize+1ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½Ä¿ï¿½Äµï¿½Ö·ï¿½ï¿½Bï¿½ï¿½ï¿½ï¿½ï¿½ï¿½deswstepï¿½ï¿½ï¿½ï¿½Îª0ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×°ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½Äµï¿½Ö·A
    DMACH1WrapConfig(0xFFFF,0,0xFFFF,0);
 
-// ¹¤×÷Ä£Ê½ÅäÖÃ
-// Persel£ºÑ¡Ôñ´¥·¢DMAµÄÍâÉèÖÐ¶ÏÔ´
-// Perinte£ºÍâÉèÖÐ¶ÏÊ¹ÄÜ£¬
-// Oneshot£ºÊ¹ÄÜÊ±£¬ÍâÉè²úÉúÒ»´ÎÖÐ¶Ï£¬¾ÍÄÜ¹»°ÑÒ»Ö¡´«µÝÍê¡£½ûÖ¹£¬ÍâÉè²úÉúÒ»´ÎÖÐ¶Ï£¬Ö»ÄÜ´«µÝÒ»¸öÂö³å
-// Cont£ºÊ¹ÄÜÊ±£¬Ã¿´ÎDMA½áÊøºó£¬ÐèÒªÔÙ´ÎÆô¶¯DMAÊ±£¬¾Í²»ÐèÒªµ÷ÓÃvoid StartDMACH1(void)¡£½ûÖ¹Ê±£¬ÖØÆôDMA£¬ÐèÒªµ÷ÓÃvoid StartDMACH1(void)
-// Datasize:ÉèÖÃÃ¿¸ö×ÖÊÇ16Î»»òÕß32Î»
-// Chintmode£ºÉèÖÃDMAÖÐ¶ÏÊÇÔÚDMAÆô¶¯»òÕß½áÊøÊ±²úÉú
-// Chinte£ºDMAÏàÓ¦Í¨µÀµÄÖÐ¶ÏÊ¹ÄÜ£¨ÍâÉè¼¶£©¡£
-// ×¢£ºPerinteºÍChinteÍ¬Ê±Ê¹ÄÜÊ±£¬²ÅÄÜ½øÈëDMAÍ¨µÀÖÐ¶Ï
-// ½öPerinteÊ¹ÄÜ£¬¿ÉÒÔ´«ÊäÊý¾Ý£¬µ«ÊÇ²»½øÈëÍ¨µÀµÄÖÐ¶Ï³ÌÐò
+// ï¿½ï¿½ï¿½ï¿½Ä£Ê½ï¿½ï¿½ï¿½ï¿½
+// Perselï¿½ï¿½Ñ¡ï¿½ñ´¥·ï¿½DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½Ô´
+// Perinteï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½Ê¹ï¿½Ü£ï¿½
+// Oneshotï¿½ï¿½Ê¹ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ð¶Ï£ï¿½ï¿½ï¿½ï¿½Ü¹ï¿½ï¿½ï¿½Ò»Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ê¡£ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ð¶Ï£ï¿½Ö»ï¿½Ü´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// Contï¿½ï¿½Ê¹ï¿½ï¿½Ê±ï¿½ï¿½Ã¿ï¿½ï¿½DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½Ù´ï¿½ï¿½ï¿½ï¿½ï¿½DMAÊ±ï¿½ï¿½ï¿½Í²ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½void StartDMACH1(void)ï¿½ï¿½ï¿½ï¿½Ö¹Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DMAï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½void StartDMACH1(void)
+// Datasize:ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½16Î»ï¿½ï¿½ï¿½ï¿½32Î»
+// Chintmodeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½DMAï¿½Ð¶ï¿½ï¿½ï¿½ï¿½ï¿½DMAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
+// Chinteï¿½ï¿½DMAï¿½ï¿½Ó¦Í¨ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½Ê¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½è¼¶ï¿½ï¿½ï¿½ï¿½
+// ×¢ï¿½ï¿½Perinteï¿½ï¿½ChinteÍ¬Ê±Ê¹ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½Ü½ï¿½ï¿½ï¿½DMAÍ¨ï¿½ï¿½ï¿½Ð¶ï¿½
+// ï¿½ï¿½PerinteÊ¹ï¿½Ü£ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½Ç²ï¿½ï¿½ï¿½ï¿½ï¿½Í¨ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶Ï³ï¿½ï¿½ï¿½
    DMACH1ModeConfig(DMA_SEQ1INT,PERINT_ENABLE,ONESHOT_ENABLE,CONT_ENABLE,SYNC_DISABLE,SYNC_SRC,
 		 OVRFLOW_DISABLE,SIXTEEN_BIT,CHINT_END,CHINT_ENABLE);
 

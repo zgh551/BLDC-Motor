@@ -1,7 +1,7 @@
 /*
  * Steering_SCI.c
  *
- *  Created on: 2016Äê3ÔÂ30ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½30ï¿½ï¿½
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -13,12 +13,12 @@
 #define SCI_FREQ 	 115200
 #define SCI_PRD 	 (LSPCLK_FREQ/(SCI_FREQ*8))-1
 
-#define DSP28_SCIA 1
+//#define DSP28_SCIA 1
 Uint16 rdata[10];
 
 // Prototype statements for functions found within this file.
-//__interrupt void scibTxFifoIsr(void);
 __interrupt void sciaRxFifoIsr(void);
+__interrupt void scibRxFifoIsr(void);
 
 void Steering_SCI_Init(void)
 {
@@ -64,23 +64,23 @@ void Steering_Send_Byte(Uint16 byte)
 }
 
 
-void Steering_SCI_Test_Init(void)
+void Steering_SCIB_Init(void)
 {
 // Interrupts that are used in this example are re-mapped to
 // ISR functions found within this file.
 	EALLOW;	// This is needed to write to EALLOW protected registers
-	PieVectTable.SCIRXINTB = &sciaRxFifoIsr;
+	PieVectTable.SCIRXINTB = &scibRxFifoIsr;
 //	PieVectTable.SCITXINTA = &sciaTxFifoIsr;
 	EDIS;   // This is needed to disable write to EALLOW protected registers
 
 	//BASE INIT
-	ScibRegs.SCICCR.all =0x0007;  // 1 stop bit,  No loopback
+	ScibRegs.SCICCR.all = 0x0007; // 1 stop bit,  No loopback
 								  // No parity,8 char bits,
 								  // async mode, idle-line protocol
-	ScibRegs.SCICTL1.all =0x0003; // enable TX, RX, internal SCICLK,
-								  // Disable RX ERR, SLEEP, TXWAKE
-	ScibRegs.SCICTL2.bit.TXINTENA =1;	// ENABLE THE TX INTERRUPT
-	ScibRegs.SCICTL2.bit.RXBKINTENA =1; // ENABLE THE RX INTERRUPT
+	ScibRegs.SCICTL1.all = 0x0003; // enable TX, RX, internal SCICLK,
+								   // Disable RX ERR, SLEEP, TXWAKE
+	ScibRegs.SCICTL2.bit.TXINTENA   = 1; // ENABLE THE TX INTERRUPT
+	ScibRegs.SCICTL2.bit.RXBKINTENA = 1; // ENABLE THE RX INTERRUPT
 	ScibRegs.SCIHBAUD = 0x00;
 	ScibRegs.SCILBAUD = SCI_PRD;
 
@@ -101,10 +101,10 @@ void Steering_SCI_Test_Init(void)
 
 }
 
-void Steering_Send_Byte_Test(Uint16 byte)
+void Steering_Send_Byte_B(Uint16 byte)
 {
 	while (ScibRegs.SCIFFTX.bit.TXFFST != 0) {}
-	ScibRegs.SCITXBUF=byte;
+	ScibRegs.SCITXBUF = byte;
 }
 
 
@@ -122,3 +122,16 @@ __interrupt void sciaRxFifoIsr(void)
 	PieCtrlRegs.PIEACK.all = PIEACK_GROUP9;       // Issue PIE ack
 }
 
+__interrupt void scibRxFifoIsr(void)
+{
+    Uint16 i;
+    for(i=0;i<8;i++)
+    {
+       rdata[i]=ScibRegs.SCIRXBUF.all;   // Read data
+    }
+
+    ScibRegs.SCIFFRX.bit.RXFFOVRCLR=1;   // Clear Overflow flag
+    ScibRegs.SCIFFRX.bit.RXFFINTCLR=1;   // Clear Interrupt flag
+
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP9;       // Issue PIE ack
+}

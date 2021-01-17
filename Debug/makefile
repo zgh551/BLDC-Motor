@@ -42,7 +42,8 @@ ORDERED_OBJS += \
 "./Src/DSP2833x_SysCtrl.obj" \
 "./Src/DSP2833x_Xintf.obj" \
 "./Src/DSP2833x_usDelay.obj" \
-"../28335_RAM_lnk.cmd" \
+"../Cmd/DSP2833x_Headers_nonBIOS.cmd" \
+"../Cmd/F28335.cmd" \
 $(GEN_CMDS__FLAG) \
 -llibc.a \
 
@@ -54,9 +55,11 @@ RMDIR := RMDIR /S/Q
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include subdir_vars.mk
+-include Cmd/subdir_vars.mk
 -include Module/subdir_vars.mk
 -include Src/subdir_vars.mk
 -include subdir_rules.mk
+-include Cmd/subdir_rules.mk
 -include Module/subdir_rules.mk
 -include Src/subdir_rules.mk
 -include objects.mk

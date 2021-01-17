@@ -1,7 +1,7 @@
 /*
  * Led.h
  *
- *  Created on: 2016Äê4ÔÂ24ÈÕ
+ *  Created on: 2016ï¿½ï¿½4ï¿½ï¿½24ï¿½ï¿½
  *      Author: ZGH
  */
 
@@ -10,7 +10,9 @@
 
 #include "include.h"
 
-void Led_Init(void);
-void Led_Toggle(void);
+void LedInit(void);
+void LedRunning(void);
+void LedErr(void);
+void LedTx(void);
 
 #endif /* STEERINGENGINE_28335_V3_INC_LED_H_ */

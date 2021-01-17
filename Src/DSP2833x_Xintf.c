@@ -233,7 +233,7 @@ void InitXintf16Gpio()
 
 //     GpioCtrlRegs.GPBMUX1.bit.GPIO36 = 3;  // XZCS0
      GpioCtrlRegs.GPBMUX1.bit.GPIO37 = 3;  // XZCS7
-     GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 3;  // XZCS6
+//     GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 3;  // XZCS6
      EDIS;
 }
 

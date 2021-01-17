@@ -320,9 +320,9 @@ interrupt void  ADCINT_ISR(void)     // ADC
 	 FW = AdcMirror.ADCRESULT0;
 	 FI = AdcMirror.ADCRESULT1;
 
-	 //Î»ÖÃ»·
+	 //Î»ï¿½Ã»ï¿½
 	 controllerCorrectPositionPID(Position_Value_Progress(FW),Target_Position,&m_position);
-	 //µçÁ÷»·
+	 //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //	 controllerCorrectPositionPID(Current_Value_Progress(FI),m_position,&m_voltage_output);
 	 //PWM Output
 	 SteeringPowerOutput(-m_position);
@@ -358,10 +358,10 @@ interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 //	 }
 //	 Target_Position = 500*sin(2*3.14*cnt/1000)+500;
 
-	 Self_Check_State_Machine(&Target_Position,FW);
+//	 Self_Check_State_Machine(&Target_Position,FW);
 	 if(cnt == 0)
 	 {
-		Led_Toggle();
+	     LedRunning();
 	 }
 //	 Target_Position = 800;
 //	 if(0 == cnt_3ms)
