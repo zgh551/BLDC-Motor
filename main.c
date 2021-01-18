@@ -6,13 +6,14 @@ extern Uint16 RamfuncsLoadEnd;
 extern Uint16 RamfuncsRunStart;
 extern Uint16 RamfuncsLoadSize;
 
-static Uint32 ARINC_Dat_H,ARINC_Dat_L;
-static Uint32 ARINC_Data;
-static Uint16 IMU_Dat=0,Power_Dat;
+//static Uint32 ARINC_Dat_H,ARINC_Dat_L;
+//static Uint32 ARINC_Data;
+//static Uint16 IMU_Dat=0,Power_Dat;
 
 int main(void) {
 // Step 1. Initialize System Control:
-   InitSysCtrl();
+
+    InitSysCtrl();
 
 // Step 2. Initialize GPIO:
 //   Realy_Init();
@@ -64,26 +65,26 @@ int main(void) {
 //-100MHz CPU Freq, 1 second Period (in uSeconds)
    ConfigCpuTimer(&CpuTimer0, 150, 5000);//5ms
 
-//-XINTF Module Initialize
+//-XINTF Module Initialize for AD2S1210
    Init_Zone();
 
 //-ADC Module Init
-   Steering_ADC_Init();
+//   Steering_ADC_Init();
 //   Steering_ADC_EPwm();
 
 //-Init the ePWM
-   InitEPwmBLDC();
+//   InitEPwmBLDC();
 
 //   DRV8432_Init();
 
-//-SCI Module Initialize
-   Steering_SCI_Init();
-//   Steering_SCI_Test_Init();
+//-SCI Module Initialize for 422
+   Steering_SCIB_Init();
+
 // Step 5. User specific code, enable interrupts:
 //-Initialize the variable
 //   StateMachine_Init(); // state machine initial
 //   FK_Init();           // this buf used for telemetry
-   Control_Init();
+//   Control_Init();
 
 //-System Check
 //   SelfCheck();

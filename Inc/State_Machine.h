@@ -1,7 +1,7 @@
 /*
  * State_Machine.h
  *
- *  Created on: 2016Äê4ÔÂ23ÈÕ
+ *  Created on: 2016ï¿½ï¿½4ï¿½ï¿½23ï¿½ï¿½
  *      Author: ZGH
  */
 
@@ -10,21 +10,21 @@
 
 #include "include.h"
 
-//-------------- ½ÓÊÕĞ­Òé------------------------//
-//·¢¿Ø×°ÖÃ ---> µ¼µ¯
-#define F_LAUCH_MISSILE_A429_CONTROL      0x80	// ¿ØÖÆ×Ö¡¢µ¼µ¯²éÑ¯×Ö
+//-------------- ï¿½ï¿½ï¿½ï¿½Ğ­ï¿½ï¿½------------------------//
+//ï¿½ï¿½ï¿½ï¿½×°ï¿½ï¿½ ---> ï¿½ï¿½ï¿½ï¿½
+#define F_LAUCH_MISSILE_A429_CONTROL      0x80	// ï¿½ï¿½ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¯ï¿½ï¿½
 
-//------·¢ËÍĞ­Òé-----------------------
-//µ¼µ¯ ---> ·¢Éä×°ÖÃ
-#define MISSILE_LAUCH_A429_STATUS     	  0xA0   // ×´Ì¬×Ö¡¢µ¼µ¯ÀàĞÍ×Ö
-#define MISSILE_LAUCH_A429_AZIMUTH    	  0xA1   // µ¼ÒıÍ··½Î»½Ç
-#define MISSILE_LAUCH_A429_PITCH      	  0xA2   // µ¼ÒıÍ·¸©Ñö½Ç
-#define MISSILE_LAUCH_A429_POWER_1   	  0xA3   // µçÑ¹1
-#define MISSILE_LAUCH_A429_POWER_2   	  0xA4   // µçÑ¹2
-#define MISSILE_LAUCH_A429_POWER_3   	  0xA5   // µçÑ¹3
-#define MISSILE_LAUCH_A429_POWER_4   	  0xA6   // µçÑ¹4
+//------ï¿½ï¿½ï¿½ï¿½Ğ­ï¿½ï¿½-----------------------
+//ï¿½ï¿½ï¿½ï¿½ ---> ï¿½ï¿½ï¿½ï¿½×°ï¿½ï¿½
+#define MISSILE_LAUCH_A429_STATUS     	  0xA0   // ×´Ì¬ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define MISSILE_LAUCH_A429_AZIMUTH    	  0xA1   // ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½Î»ï¿½ï¿½
+#define MISSILE_LAUCH_A429_PITCH      	  0xA2   // ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+#define MISSILE_LAUCH_A429_POWER_1   	  0xA3   // ï¿½ï¿½Ñ¹1
+#define MISSILE_LAUCH_A429_POWER_2   	  0xA4   // ï¿½ï¿½Ñ¹2
+#define MISSILE_LAUCH_A429_POWER_3   	  0xA5   // ï¿½ï¿½Ñ¹3
+#define MISSILE_LAUCH_A429_POWER_4   	  0xA6   // ï¿½ï¿½Ñ¹4
 
- //ÏàÓ¦µÄÊı¾İÎ»¶¨Òå  ·¢Éä×°ÖÃ ---> µ¼µ¯
+ //ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ï¿½ï¿½  ï¿½ï¿½ï¿½ï¿½×°ï¿½ï¿½ ---> ï¿½ï¿½ï¿½ï¿½
  #define LM_COMMOND_BIT 					8
  #define LM_LOCK_BIT  						16
  #define LM_POWER_BIT 						17
@@ -36,7 +36,7 @@
  #define LM_POWER_MASK 						0x01
 
 
- //ÏàÓ¦µÄÊı¾İÎ»  µ¼µ¯ ---> ·¢Éä×°ÖÃ
+ //ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î»  ï¿½ï¿½ï¿½ï¿½ ---> ï¿½ï¿½ï¿½ï¿½×°ï¿½ï¿½
  #define ML_NORMAL_BIT  					8
  #define ML_CAPTURE_BIT 					9
  #define ML_TYPE_BIT						10
@@ -52,42 +52,35 @@
 
  typedef struct Fly_To_Mis_Messege
  {
-	 Uint16 	Missile_Lock;       		 	// µ¼µ¯ÊÇ·ñ½âËø   1bit
-	 Uint16 	Missile_Power;   	  		 	// µ¼µ¯¹©µç           1bit
-	 Uint16 	Missile_Lauch;      		 	// µ¼µ¯»á·ñ·¢Éä   1bit
-	 Uint16 	Missile_Commond;				// µ¼µ¯ÃüÁî×Ö
- }Fly_To_Mis_Ctr_Info;						// ·É»úµ½µ¼µ¯µÄĞÅÏ¢½á¹¹Ìå
+	 Uint16 	Missile_Lock;       		 	// ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½   1bit
+	 Uint16 	Missile_Power;   	  		 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½           1bit
+	 Uint16 	Missile_Lauch;      		 	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½   1bit
+	 Uint16 	Missile_Commond;				// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ }Fly_To_Mis_Ctr_Info;						// ï¿½É»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½á¹¹ï¿½ï¿½
 
- //µ¼µ¯ -> ·¢Éä×°ÖÃ Êı¾İ½á¹¹
- //¸Ã½á¹¹°üº¬ÁË´«Êä¹ı³ÌÖĞËùĞèµÄĞÅÏ¢
+
  typedef struct Mis_To_Fly_Messege
  {
-	 Uint32 Missile_Normal;						// µ¼µ¯ÊÇ·ñÕı³£	1bit
-	 Uint32 Missile_Capture;					// µ¼µ¯½Ø»ñ 	1bit
-	 Uint32 Missile_Type;     					// µ¼µ¯ÀàĞÍ
+	 Uint32 DriverBoardCheck;					// é©±åŠ¨æ¿è‡ªæ£€æ•…éšœç 
+	 Uint32 MotorCheck;						    // ç”µæœºè‡ªæ£€æ•…éšœç 
 
-	 Uint32 Fly_Control_Power;             		// ·É¿ØÏµÍ³¹©µçÕı³£
-	 Uint32 RAM_Check;							// Íâ²¿RAM×Ô¼ìÕı³£
-	 Uint32 Guide_Check;						// µ¼Òı×Ô¼ìÕı³£
-	 Uint32 IMU_Check;							// IMU ×Ô¼ìÕı³£
-	 Uint32 Steering_Check;          			// ¶æ»ú×Ô¼ìÕı³£
-	 Uint32 Fly_Control_Batter;            		// ·É¿ØÏµÍ³µç³ØÕı³£
-	 Uint32 Steering_Batter;          			// ¶æ»úµç³ØÕı³£
-	 Uint32 Engine_Fire_Sigle;          		// ·¢¶¯»úµã»ğĞÅºÅ
+	 Uint32 SoftwareVersion;					// é©±åŠ¨æ¿è½¯ä»¶ç‰ˆæœ¬å·
 
-     int32  Seeker_Azimuth;						// µ¼ÒıÍ··½Î»½Ç
- 	 int32  Seeker_Pitch;						// µ¼ÒıÍ·¸©Ñö½Ç
+ 	 Uint32 MotorDriverVoltage;       			// ç”µæœºé©±åŠ¨ç”µå‹
+ 	 Uint32 MotorDriverCurrent;      			// ç”µæœºé©±åŠ¨ç”µæµ
+ 	 Uint32 MotorRotatePosition;         	 	// ç”µæœºæ—‹è½¬ä½ç½®
+ 	 Uint32 MotorAngularVelocity;      			// ç”µæœºè§’é€Ÿåº¦
+ 	 Uint32 MotorStatus;      		            // ç”µæœºçŠ¶æ€å‚æ•°
 
- 	 Uint32 DJ_Batter_Voltage;       			//¶æ»úµç³ØµçÑ¹
- 	 Uint32 SYS_Batter_Voltage;      			//µ¯ÔØ¼ÆËã»úµç³ØµçÑ¹
- 	 Uint32 SYS_12_Voltage;         	 		//µ¯ÔØ¼ÆËã»ú+12µçÑ¹
- 	 Uint32 SYS_5_Voltage;      			 	//µ¯ÔØ¼ÆËã»ú+5µçÑ¹
- 	 Uint32 SYS_Negative_5_Voltage;      		//µ¯ÔØ¼ÆËã»ú-5µçÑ¹
- 	 Uint32 Position_Feedback_Voltage;   		//Î»ÖÃ·´À¡µçÑ¹
- 	 Uint32 Current_Feedback_Voltage;    		//µçÁ÷·´À¡µçÑ¹
-  }Mis_To_Fly_Sta_Info;//µ¼µ¯µ½·É»úµÄĞÅÏ¢½á¹¹Ìå
+ 	 // é¥æµ‹ä¸ŠæŠ¥æ•°æ®åŒ…
+ 	 Uint32 MotorTargetPosition;   		        // ç”µæœºç›®æ ‡ä½ç½®
+ 	 Uint32 MotorActualPosition;    		    // ç”µæœºå®é™…è½¬åŠ¨ä½ç½®
+ 	 Uint32 MotorActualPosition;                // ç”µæœºå®é™…è½¬åŠ¨ä½ç½®
+ 	 Uint32 ActualRotationRings;                // æœ¬ç»„ç”µæœºå®é™…æ—‹è½¬åœˆæ•°
+ 	 Uint32 ThrowStatus;                        // æŠ•æ”¾çŠ¶æ€
+  }Driver_To_Master_Sta_Info;
 
-extern Mis_To_Fly_Sta_Info m_mis_fly_Messege;
+extern Driver_To_Master_Sta_Info m_mis_fly_Messege;
 extern Fly_To_Mis_Ctr_Info m_fly_mis_Messege;
 
 void StateMachine_Init(void);

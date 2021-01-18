@@ -317,21 +317,21 @@ interrupt void  XINT2_ISR(void)
 interrupt void  ADCINT_ISR(void)     // ADC
 {
   // Insert ISR Code here
-	 FW = AdcMirror.ADCRESULT0;
-	 FI = AdcMirror.ADCRESULT1;
+//	 FW = AdcMirror.ADCRESULT0;
+//	 FI = AdcMirror.ADCRESULT1;
 
 	 //λ�û�
-	 controllerCorrectPositionPID(Position_Value_Progress(FW),Target_Position,&m_position);
+//	 controllerCorrectPositionPID(Position_Value_Progress(FW),Target_Position,&m_position);
 	 //������
 //	 controllerCorrectPositionPID(Current_Value_Progress(FI),m_position,&m_voltage_output);
 	 //PWM Output
-	 SteeringPowerOutput(-m_position);
+//	 SteeringPowerOutput(-m_position);
 
   // Reinitialize for next ADC sequence
-     AdcRegs.ADCTRL2.bit.RST_SEQ1 = 1;         // Reset SEQ1
-     AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
+    AdcRegs.ADCTRL2.bit.RST_SEQ1 = 1;         // Reset SEQ1
+    AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
   // To receive more interrupts from this PIE group, acknowledge this interrupt
-     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
 
 // INT1.7
@@ -362,6 +362,7 @@ interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 	 if(cnt == 0)
 	 {
 	     LedRunning();
+	     Steering_Send_Byte_B(0xaa);
 	 }
 //	 Target_Position = 800;
 //	 if(0 == cnt_3ms)

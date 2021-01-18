@@ -1,7 +1,7 @@
 /*
  * State_Machine.c
  *
- *  Created on: 2016Äê4ÔÂ23ÈÕ
+ *  Created on: 2016ï¿½ï¿½4ï¿½ï¿½23ï¿½ï¿½
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -9,8 +9,8 @@
 
 #define ARINC429_Send   10
 
-#define FirstCheckChar  0xAA
-#define SecondCheckChar 0x55
+#define FirstCheckChar  0x55
+#define SecondCheckChar 0x77
 
 //define the Power RX state
 typedef enum {
@@ -23,7 +23,7 @@ CheckSum
 }PowerState;
 PowerState Power_State = HeadFirst;
 
-//½ÓÊÕÊý¾ÝµÄ½á¹¹Ìå
+//422 Communication
 typedef struct PowerData{
 	Uint16  len ;
 	Uint16  header;
@@ -53,7 +53,7 @@ IMU_ReceiveData,
 IMU_CRC_Check
 }IMUState;
 IMUState IMU_State= IMU_HeadFirst;
-//IMU ½ÓÊÕÊý¾ÝµÄ½á¹¹Ìå
+//IMU ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÝµÄ½á¹¹ï¿½ï¿½
 typedef struct IMUData{
 	unsigned char  Dat[14];
 	unsigned char  CRC16_Check[2];
@@ -263,7 +263,7 @@ void Power_State_Machine(Uint16 Receive_Data)
 		case CheckSum:
 			Rdat.checksum = c_sum&0xff;
 			Power_State = HeadFirst;
-			if(Receive_Data == Rdat.checksum)//½ÓÊÕµ½µÄÊý¾ÝÊÇÕýÈ·µÄ
+			if(Receive_Data == Rdat.checksum)//ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½
 			{
 				if(Rdat.header == 0xA5)
 				{
@@ -522,7 +522,7 @@ void Self_Check_State_Machine(Uint16 *Tartget_Position,Uint16 Feedback_Position)
 			Time_ms_cnt++;
 			if(Time_ms_cnt >= 3000)
 			{
-				Self_check_state = Err;//ÐÞ¸Ä
+				Self_check_state = Err;//ï¿½Þ¸ï¿½
 				Time_ms_cnt = 0;
 			}
 		}
@@ -594,7 +594,7 @@ void ARINC_Decode(Uint32 Dat,Fly_To_Mis_Ctr_Info *Control_Information)
 {
 	switch(Dat & 0x00ff)
 	{
-		case F_LAUCH_MISSILE_A429_CONTROL: // ¿ØÖÆ×Ö¡¢µ¼µ¯²éÑ¯×Ö
+		case F_LAUCH_MISSILE_A429_CONTROL: // ï¿½ï¿½ï¿½ï¿½ï¿½Ö¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¯ï¿½ï¿½
 			Control_Information->Missile_Commond        =   (Dat >> LM_COMMOND_BIT) & LM_COMMOND_MASK;
 			Control_Information->Missile_Lock			=	(Dat >> LM_LOCK_BIT   ) & LM_LOCK_MASK ;
 			Control_Information->Missile_Power			=	(Dat >> LM_POWER_BIT  ) & LM_POWER_MASK;
@@ -612,18 +612,18 @@ void ARINC_Decode(Uint32 Dat,Fly_To_Mis_Ctr_Info *Control_Information)
 void ARINC_Encode(Mis_To_Fly_Sta_Info *Status_Information)
 {
 	Uint32  ARINC_Dat;
-	ARINC_Dat = (Status_Information->Missile_Normal  	   << ML_NORMAL_BIT)   			|// µ¼µ¯ÊÇ·ñÕý³£
-				(Status_Information->Missile_Capture       << ML_CAPTURE_BIT)  			|// µ¼µ¯½Ø»ñ
-				(Status_Information->Missile_Type    	   << ML_TYPE_BIT)     			|// µ¼µ¯ÀàÐÍ
-				(Status_Information->Fly_Control_Power     << ML_FLY_CONTROL_POWER_BIT) |// ·É¿Ø¹©µç×´Ì¬
-				(Status_Information->RAM_Check    	   	   << ML_RAM_CHECK_BIT)     	|// Íâ²¿RAM×Ô¼ì×´Ì¬
-				(Status_Information->Guide_Check     	   << ML_GUIDE_CHECK_BIT) 		|// µ¼Òý×Ô¼ì×´Ì¬
-				(Status_Information->IMU_Check    	       << ML_IMU_CHECK_BIT)     	|// IMU×Ô¼ì×´Ì¬
-				(Status_Information->Steering_Check    	   << ML_STEERING_CHECK_BIT)    |// ¶æ»ú×Ô¼ì×´Ì¬
-				(Status_Information->Fly_Control_Batter    << ML_FLY_CONTROL_BATTER_BIT)|// ·É¿Øµç³Ø×´Ì¬
-				(Status_Information->Steering_Batter   	   << ML_STEERING_BATTER_BIT)   |// ¶æ»úµç³Ø×´Ì¬
-				(Status_Information->Engine_Fire_Sigle     << ML_ENGINE_FIRE_SIGLE_BIT) |// ·¢¶¯»úµã»ðÐÅºÅ×´Ì¬
-				MISSILE_LAUCH_A429_STATUS;												 // ±êÇ©
+	ARINC_Dat = (Status_Information->Missile_Normal  	   << ML_NORMAL_BIT)   			|// ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½ï¿½
+				(Status_Information->Missile_Capture       << ML_CAPTURE_BIT)  			|// ï¿½ï¿½ï¿½ï¿½ï¿½Ø»ï¿½
+				(Status_Information->Missile_Type    	   << ML_TYPE_BIT)     			|// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+				(Status_Information->Fly_Control_Power     << ML_FLY_CONTROL_POWER_BIT) |// ï¿½É¿Ø¹ï¿½ï¿½ï¿½×´Ì¬
+				(Status_Information->RAM_Check    	   	   << ML_RAM_CHECK_BIT)     	|// ï¿½â²¿RAMï¿½Ô¼ï¿½×´Ì¬
+				(Status_Information->Guide_Check     	   << ML_GUIDE_CHECK_BIT) 		|// ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½×´Ì¬
+				(Status_Information->IMU_Check    	       << ML_IMU_CHECK_BIT)     	|// IMUï¿½Ô¼ï¿½×´Ì¬
+				(Status_Information->Steering_Check    	   << ML_STEERING_CHECK_BIT)    |// ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½×´Ì¬
+				(Status_Information->Fly_Control_Batter    << ML_FLY_CONTROL_BATTER_BIT)|// ï¿½É¿Øµï¿½ï¿½×´Ì¬
+				(Status_Information->Steering_Batter   	   << ML_STEERING_BATTER_BIT)   |// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+				(Status_Information->Engine_Fire_Sigle     << ML_ENGINE_FIRE_SIGLE_BIT) |// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½×´Ì¬
+				MISSILE_LAUCH_A429_STATUS;												 // ï¿½ï¿½Ç©
 
    *(Uint16*)(0x100004) = (Uint16)((ARINC_Dat>>16)&0xffff);
    	DELAY_US(ARINC429_Send);
