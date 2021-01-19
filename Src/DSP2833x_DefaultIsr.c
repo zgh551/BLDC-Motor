@@ -339,6 +339,7 @@ interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 {
   // Insert ISR Code here
 	 cnt = (cnt + 1) % 64;
+	 *(Uint16*)(0x200000) = 0;
 //	 cnt_5ms = (cnt_5ms + 1)%15;
 //	 if(0 == cnt_5ms)
 //	 {
@@ -1135,32 +1136,32 @@ interrupt void XINT3_ISR(void)  // External Interrupt
 
   // Insert ISR Code here
 	Data_Type = (GpioDataRegs.GPBDAT.all &0x70000000)>>28;
-	switch(Data_Type)
-	{
-	case 0:
-		FK_Dat  =  *(Uint16*)(0x100000);
-		break;
-	case 1:
-		IMU_Dat = *(Uint16*)(0x100001);
-		IMU_State_Machine(IMU_Dat);
-		break;
-	case 2:
-		DY_Dat  =  *(Uint16*)(0x100002);
-		break;
-	case 3:
-		Power_Dat =  *(Uint16*)(0x100003);
-		Power_State_Machine(Power_Dat);
-		break;
-	case 4:
-		ARINC_Dat_H =  *(Uint16*)(0x100004);
-		ARINC_Dat_L =  *(Uint16*)(0x100005);
-		ARINC_Data  =  (Uint32)((ARINC_Dat_H<<16)|ARINC_Dat_L);
-		ARINC_Decode(ARINC_Data,&m_fly_mis_Messege);
-		break;
-
-	default:
-		break;
-	}
+//	switch(Data_Type)
+//	{
+//	case 0:
+//		FK_Dat  =  *(Uint16*)(0x100000);
+//		break;
+//	case 1:
+//		IMU_Dat = *(Uint16*)(0x100001);
+//		IMU_State_Machine(IMU_Dat);
+//		break;
+//	case 2:
+//		DY_Dat  =  *(Uint16*)(0x100002);
+//		break;
+//	case 3:
+//		Power_Dat =  *(Uint16*)(0x100003);
+//		Power_State_Machine(Power_Dat);
+//		break;
+//	case 4:
+//		ARINC_Dat_H =  *(Uint16*)(0x100004);
+//		ARINC_Dat_L =  *(Uint16*)(0x100005);
+//		ARINC_Data  =  (Uint32)((ARINC_Dat_H<<16)|ARINC_Dat_L);
+//		ARINC_Decode(ARINC_Data,&m_fly_mis_Messege);
+//		break;
+//
+//	default:
+//		break;
+//	}
   // To receive more interrupts from this PIE group, acknowledge this interrupt
    PieCtrlRegs.PIEACK.all = PIEACK_GROUP12;
 }

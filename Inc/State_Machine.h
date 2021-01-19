@@ -50,16 +50,13 @@
  #define ML_STEERING_BATTER_BIT				18
  #define ML_ENGINE_FIRE_SIGLE_BIT			19
 
- typedef struct Fly_To_Mis_Messege
- {
-	 Uint16 	Missile_Lock;       		 	// �����Ƿ����   1bit
-	 Uint16 	Missile_Power;   	  		 	// ��������           1bit
-	 Uint16 	Missile_Lauch;      		 	// ���������   1bit
-	 Uint16 	Missile_Commond;				// ����������
- }Fly_To_Mis_Ctr_Info;						// �ɻ�����������Ϣ�ṹ��
+typedef struct _Master2DriverMessege
+{
+    Uint16 	Commond;
+}Master2DriverMessege;
 
 
- typedef struct Mis_To_Fly_Messege
+ typedef struct _Driver2MasterMessege
  {
 	 Uint32 DriverBoardCheck;					// 驱动板自检故障码
 	 Uint32 MotorCheck;						    // 电机自检故障码
@@ -75,20 +72,19 @@
  	 // 遥测上报数据包
  	 Uint32 MotorTargetPosition;   		        // 电机目标位置
  	 Uint32 MotorActualPosition;    		    // 电机实际转动位置
- 	 Uint32 MotorActualPosition;                // 电机实际转动位置
  	 Uint32 ActualRotationRings;                // 本组电机实际旋转圈数
  	 Uint32 ThrowStatus;                        // 投放状态
-  }Driver_To_Master_Sta_Info;
+  }Driver2MasterMessege;
 
-extern Driver_To_Master_Sta_Info m_mis_fly_Messege;
-extern Fly_To_Mis_Ctr_Info m_fly_mis_Messege;
-
-void StateMachine_Init(void);
-void Power_State_Machine(Uint16 Receive_Data);
-void IMU_State_Machine(Uint16 Receive_Data);
-
-void ARINC_Decode(Uint32 Dat,Fly_To_Mis_Ctr_Info *Control_Information);
-void ARINC_Encode(Mis_To_Fly_Sta_Info *Status_Information);
-Uint16 Fly_Control_Voltage_Check(void);
-void Self_Check_State_Machine(Uint16 *Tartget_Position,Uint16 Feedback_Position);
+//extern Driver_To_Master_Sta_Info m_mis_fly_Messege;
+//extern Fly_To_Mis_Ctr_Info m_fly_mis_Messege;
+//
+//void StateMachine_Init(void);
+//void Power_State_Machine(Uint16 Receive_Data);
+//void IMU_State_Machine(Uint16 Receive_Data);
+//
+//void ARINC_Decode(Uint32 Dat,Fly_To_Mis_Ctr_Info *Control_Information);
+//void ARINC_Encode(Mis_To_Fly_Sta_Info *Status_Information);
+//Uint16 Fly_Control_Voltage_Check(void);
+//void Self_Check_State_Machine(Uint16 *Tartget_Position,Uint16 Feedback_Position);
 #endif /* STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_ */
