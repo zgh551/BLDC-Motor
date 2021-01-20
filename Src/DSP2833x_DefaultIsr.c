@@ -32,7 +32,7 @@ Uint16 DMABuf1[5];
 Uint16 FW,FI;
 
 //CPU_TIMER0 ISR
-Uint16 cnt=0,cnt_5ms=0,cnt_select=0;
+Uint16 cnt=0,cnt_500ms=0,cnt_select=0;
 //PID  Control
 int16  m_position,m_voltage_output;
 Uint16 Target_Position=500;
@@ -337,17 +337,14 @@ interrupt void  ADCINT_ISR(void)     // ADC
 // INT1.7
 interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 {
-  // Insert ISR Code here
-	 cnt = (cnt + 1) % 64;
-	 *(Uint16*)(0x200000) = 0;
-//	 cnt_5ms = (cnt_5ms + 1)%15;
-//	 if(0 == cnt_5ms)
-//	 {
-//		 *(Uint16*)(0x100004) = (Uint16)((FW<<4)|((FI>>8)&0xf));
-//		 DELAY_US(100);
-//		 *(Uint16*)(0x100005) = (Uint16)(((FI<<8)&0xff00)|MISSILE_LAUCH_A429_POWER_4);
-//		 DELAY_US(3000);
-//	 }
+    // Insert ISR Code here
+    cnt = (cnt + 1) % 64;
+
+    cnt_500ms = (cnt_500ms + 1) % 100;
+    if(0 == cnt_500ms)
+    {
+      TelemetrySendFlag = 0xAABB;
+    }
 //	 cnt_3ms = (cnt_3ms + 1)%2000;
 //	 if(cnt_3ms > 999)
 //	 {

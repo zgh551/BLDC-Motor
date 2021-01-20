@@ -29,6 +29,9 @@
 #define DELIVERRY_REACT 		(0x82) // 投放应答
 #define RESET_REACT     		(0x83) // 复位应答
 #define APROXMT_ZERO_REACT 		(0x84) // 近似零位应答
+#define DRIVER_BOARD_CYCLE_SEND (0x85) // 驱动板周期发送
+#define TELEMETRY_SEND 			(0x85) // 遥测数据发送
+
 typedef struct _Master2DriverMessege
 {
 	Uint16 Commond;							// 命令字 1：自检；2：投放； 3：复位 4：近似零位
@@ -66,6 +69,8 @@ typedef struct _Driver2MasterMessege
 
 extern Master2DriverMessege m2d_Messege;
 extern Driver2MasterMessege d2m_Messege;
+
+extern Uint16 TelemetrySendFlag;
 
 void CommandResponse(Uint16 rsp);
 /**

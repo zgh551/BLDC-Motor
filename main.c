@@ -18,7 +18,7 @@ int main(void) {
 // Step 2. Initialize GPIO:
 //   Realy_Init();
 //   FIFO_state();
-//   Digital_IO_Init();
+   Digital_IO_Init();
    LedInit();
    InitSciGpio();
 //   InitEQepGpio();
@@ -133,6 +133,11 @@ int main(void) {
       else
       {
          // do nothing
+      }
+
+      if (0xAABB = TelemetrySendFlag)
+      {
+         BLDC_TelemetrySend();
       }
    }
 }
