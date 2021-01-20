@@ -110,22 +110,29 @@ int main(void) {
 // Step 6. IDLE loop. Just sit and loop forever (optional):
    while(1)
    {
-//    if(!IMU_get_state())
-//    {
-//        IMU_Dat = *(Uint16*)(0x100001);
-//        IMU_State_Machine(IMU_Dat);
-//    }
-//    if(!POWER_get_state())
-//    {
-//        Power_Dat =  *(Uint16*)(0x100003);
-//        Power_State_Machine(Power_Dat);
-//    }
-//    if(!ARINC429_get_state())
-//    {
-//        ARINC_Dat_H =  *(Uint16*)(0x100004);
-//        ARINC_Dat_L =  *(Uint16*)(0x100005);
-//        ARINC_Data  =  (Uint32)((ARINC_Dat_H<<16)|ARINC_Dat_L);
-//        ARINC_Decode(ARINC_Data,&m_fly_mis_Messege);
-//    }
+      if (SELFCHECK == m2d_Messege.Commond)
+      {
+         BLDC_SelfCheck();
+         m2d_Messege.Commond = 0;
+      }
+      else if (DELIVERRY == m2d_Messege.Commond)
+      {
+         CommandResponse(DELIVERRY_REACT);
+         m2d_Messege.Commond = 0;
+      }
+      else if (RESET == m2d_Messege.Commond)
+      {
+         CommandResponse(RESET_REACT);
+         m2d_Messege.Commond = 0;
+      }
+      else if (APROXMT_ZERO == m2d_Messege.Commond)
+      {
+         CommandResponse(APROXMT_ZERO_REACT);
+         m2d_Messege.Commond = 0;
+      }
+      else
+      {
+         // do nothing
+      }
    }
 }

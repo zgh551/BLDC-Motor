@@ -364,6 +364,8 @@ interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 	 {
 	     LedRunning();
 	     Steering_Send_Byte_B(0xaa);
+
+       Uint16 fault_status = AD2S1210_ConfigModeRead(FAULT);
 	 }
 //	 Target_Position = 800;
 //	 if(0 == cnt_3ms)

@@ -57,8 +57,9 @@ void AD2S1210_ConfigModeWrite(Uint16 add, Uint16 dat)
 {
     AD2S1210_Mode_A0(1);
     AD2S1210_Mode_A1(1);
-
+    DELAY_US(10);
 	*(Uint16*)(0x200000) = add;
+    DELAY_US(100);
 	*(Uint16*)(0x200000) = dat;
 }
 
@@ -66,25 +67,25 @@ Uint16 AD2S1210_ConfigModeRead(Uint16 add)
 {
     AD2S1210_Mode_A0(1);
     AD2S1210_Mode_A1(1);
-
+    DELAY_US(10);
     *(Uint16*)(0x200000) = add;
-
+    DELAY_US(100);
     return *(Uint16*)(0x200000);
 }
 
 void AD2S1210_DataRead(Uint16* pos, Uint16* vel, Uint16* fault)
 {
     AD2S1210_Sample(0);
-    DELAY_US(1);
+    DELAY_US(10);
     AD2S1210_Sample(1);
 
     AD2S1210_Mode_A0(0);
     AD2S1210_Mode_A1(0);
-    DELAY_US(1);
+    DELAY_US(10);
     *pos = *(Uint16*)(0x200000);
-    DELAY_US(5);
+    DELAY_US(50);
     AD2S1210_Mode_A0(0);
     AD2S1210_Mode_A1(1);
-    DELAY_US(1);
+    DELAY_US(10);
     *vel = *(Uint16*)(0x200000);
 }

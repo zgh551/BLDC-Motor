@@ -124,11 +124,7 @@ __interrupt void sciaRxFifoIsr(void)
 
 __interrupt void scibRxFifoIsr(void)
 {
-    Uint16 i;
-    for(i=0;i<8;i++)
-    {
-       rdata[i]=ScibRegs.SCIRXBUF.all;   // Read data
-    }
+	CommunicationStateMachine(ScibRegs.SCIRXBUF.all);
 
     ScibRegs.SCIFFRX.bit.RXFFOVRCLR=1;   // Clear Overflow flag
     ScibRegs.SCIFFRX.bit.RXFFINTCLR=1;   // Clear Interrupt flag

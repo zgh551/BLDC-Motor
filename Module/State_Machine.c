@@ -16,346 +16,239 @@
 typedef enum {
 HeadFirst = 0,
 HeadSecond,
-header,
 Length,
+Commond,
 ReceiveData,
 CheckSum
-}PowerState;
-PowerState Power_State = HeadFirst;
+} CommunicationState;
+CommunicationState Com422_State = HeadFirst;
 
 //422 Communication
-typedef struct PowerData{
-	Uint16  len ;
-	Uint16  header;
-	Uint32  dat[12];
+typedef struct _RxData{
+	Uint16  len;
+	Uint16  cmd;
+	Uint16  data[100];
 	Uint16  checksum;
 }RxData;
-RxData Rdat;
+RxData Rdata;
 
-//define the zgh Check state
-//typedef enum {
-//Voltage_Check = 0,
-//Steering_SlefCheck,
-//Steering_Check_Position_one,
-//Steering_Check_Position_two,
-//Batter_Check,
-//Fire,
-//Idle,
-//Err
-//}CheckState;
-//CheckState Self_check_state = Voltage_Check;
+typedef struct _TxData{
+	Uint16  len;
+	Uint16  data[96];
+	Uint16  checksum;
+}TxData;
+TxData Tdata;
 
+Uint16 dat_cnt = 0;
 
-//typedef enum {
-//IMU_HeadFirst = 0,
-//IMU_HeadSecond,
-//IMU_ReceiveData,
-//IMU_CRC_Check
-//}IMUState;
-//IMUState IMU_State= IMU_HeadFirst;
-////IMU �������ݵĽṹ��
-//typedef struct IMUData{
-//	unsigned char  Dat[14];
-//	unsigned char  CRC16_Check[2];
-//}IMUData;
-//IMUData IMU_Buffer;
-//
-//Uint16 IMU_cnt=0;
-//Uint16 c_sum;
-//Uint16 dat_cnt=0;
-//Uint16 Voltage_Check_Cnt=0,Voltage_Check_Finish=0,Power_cnt=0,Model_Type=0X7F80;
-//Uint16 Batter_Check_Flag=0,Batter_cnt=0;
-//volatile Uint16 Time_ms_cnt,Steering_StateFlag,Steering_Check_cnt;
-
-//Mis_To_Fly_Sta_Info m_mis_fly_Messege;
-//Fly_To_Mis_Ctr_Info m_fly_mis_Messege;
-
-
-
-//void ARINC_Encode(Mis_To_Fly_Sta_Info *Status_Information);
-
+Master2DriverMessege m2d_Messege;
+Driver2MasterMessege d2m_Messege;
 
 void StateMachine_Init(void)
 {
-//	Uint16 i;
-//	//power state machine
-//	Power_State 	= HeadFirst;
-//	Rdat.header 	= 0;
-//	Rdat.len    	= 0;
-//	Rdat.checksum	= 0;
-//	for(i=0;i<12;i++)
-//	{
-//		Rdat.dat[i] = 0;
-//	}
-//	c_sum  =0;
-//	dat_cnt=0;
-//	Voltage_Check_Cnt    =0;
-//	Voltage_Check_Finish =0;
-//	Power_cnt  =0;
-//	Model_Type =0X7F80;
-//	Batter_cnt = 0;
-//	//imu state machine
-//	IMU_State = IMU_HeadFirst;
-//	for(i=0;i<14;i++)
-//	{
-//		IMU_Buffer.Dat[i] = 0;
-//	}
-//	for(i=0;i<2;i++)
-//	{
-//		IMU_Buffer.CRC16_Check[i]=0;
-//	}
-//	IMU_cnt = 0;
+	//communication state machine
+	Com422_State 	= HeadFirst;
+	Rdata.header 	= 0;
+	Rdata.len    	= 0;
+	Rdata.checksum	= 0;
+	for(i=0; i < 240; i++)
+	{
+		Rdata.data[i] = 0;
+	}
+	dat_cnt=0;
+}
 
-	//selfcheck
-//	Self_check_state 	= Voltage_Check;
-//	Time_ms_cnt      	= 0;
-//	Steering_StateFlag 	= 0;
-//	Steering_Check_cnt  = 0;
-//	Batter_Check_Flag	= 0;
+void BLDC_SelfCheck(void)
+{
+	Uint16 i = 0, check_sum = 0;
 
-//	m_mis_fly_Messege.Current_Feedback_Voltage=0;
-//	m_mis_fly_Messege.DJ_Batter_Voltage=0;
-//	m_mis_fly_Messege.Fly_Control_Batter=0;
-//	m_mis_fly_Messege.Fly_Control_Power=0;
-//	m_mis_fly_Messege.Guide_Check=0;
-//	m_mis_fly_Messege.IMU_Check=0;
-//	m_mis_fly_Messege.Missile_Capture=0;
-//	m_mis_fly_Messege.Missile_Normal=0;
-//	m_mis_fly_Messege.Missile_Type=0;
-//	m_mis_fly_Messege.Position_Feedback_Voltage=0;
-//	m_mis_fly_Messege.RAM_Check=0;
-//	m_mis_fly_Messege.SYS_12_Voltage=0;
-//	m_mis_fly_Messege.SYS_5_Voltage=0;
-//	m_mis_fly_Messege.SYS_Batter_Voltage=0;
-//	m_mis_fly_Messege.SYS_Negative_5_Voltage=0;
-//	m_mis_fly_Messege.Seeker_Azimuth=0;
-//	m_mis_fly_Messege.Seeker_Pitch=0;
-//	m_mis_fly_Messege.Steering_Batter=0;
-//	m_mis_fly_Messege.Steering_Check=0;
-//	m_mis_fly_Messege.Engine_Fire_Sigle=0;
-//
-//	m_fly_mis_Messege.Missile_Commond=0;
-//	m_fly_mis_Messege.Missile_Lauch=0;
-//	m_fly_mis_Messege.Missile_Lock=0;
-//	m_fly_mis_Messege.Missile_Power=0;
+	Tdata.len = 8;
+	Tdata.data[0] = SELFCHECK_REACT;
+	Tdata.data[1] = Driver2MasterMessege.DriverBoardCheck; // 驱动板自检故障码		
+	Tdata.data[2] = Driver2MasterMessege.MotorCheck;	   // 电机自检故障码
+	Tdata.data[3] = Driver2MasterMessege.SoftwareVersion_L;  // 驱动板软件版本号 低
+	Tdata.data[4] = Driver2MasterMessege.SoftwareVersion_H;  // 驱动板软件版本号 高
+	Tdata.data[5] = 0;
+	Tdata.data[6] = 0;
+	Tdata.data[7] = 0;
+
+	Steering_Send_Byte_B(0x55);
+	Steering_Send_Byte_B(0x77);
+	Steering_Send_Byte_B(Tdata.len);
+	check_sum = 0;
+	for (i = 0; i < Tdata.len; i++)
+	{
+		check_sum += Tdata.data[i];
+		Steering_Send_Byte_B(Tdata.data[i]);
+	}
+	Steering_Send_Byte_B(check_sum & 0x00ff);
+}
+
+void CommandResponse(Uint16 rsp)
+{
+	Uint16 i = 0, check_sum = 0;
+	Tdata.len = 8;
+	Tdata.data[0] = rsp;
+	Tdata.data[1] = 3;	
+	Tdata.data[2] = 0;
+	Tdata.data[3] = 0;  
+	Tdata.data[4] = 0;
+	Tdata.data[5] = 0;
+	Tdata.data[6] = 0;
+	Tdata.data[7] = 0;
+
+	Steering_Send_Byte_B(0x55);
+	Steering_Send_Byte_B(0x77);
+	Steering_Send_Byte_B(Tdata.len);
+	check_sum = 0;
+	for (i = 0; i < Tdata.len; i++)
+	{
+		check_sum += Tdata.data[i];
+		Steering_Send_Byte_B(Tdata.data[i]);
+	}
+	Steering_Send_Byte_B(check_sum & 0x00ff);
+}
+
+void BLDC_Delivery(void)
+{
+	Uint16 i = 0, check_sum = 0;
+
+	Tdata.len = 8;
+	Tdata.data[0] = 0x82;
+	Tdata.data[1] = 3;	
+	Tdata.data[2] = 0;
+	Tdata.data[3] = 0;  
+	Tdata.data[4] = 0;
+	Tdata.data[5] = 0;
+	Tdata.data[6] = 0;
+	Tdata.data[7] = 0;
+
+	Steering_Send_Byte_B(0x55);
+	Steering_Send_Byte_B(0x77);
+	Steering_Send_Byte_B(Tdata.len);
+	check_sum = 0;
+	for (i = 0; i < Tdata.len; i++)
+	{
+		check_sum += Tdata.data[i];
+		Steering_Send_Byte_B(Tdata.data[i]);
+	}
+	Steering_Send_Byte_B(check_sum & 0x00ff);
+}
+
+void BLDC_Reset(void)
+{
+	Uint16 i = 0, check_sum = 0;
+
+	Tdata.len = 8;
+	Tdata.data[0] = 0x83;
+	Tdata.data[1] = 3;	
+	Tdata.data[2] = 0;
+	Tdata.data[3] = 0;  
+	Tdata.data[4] = 0;
+	Tdata.data[5] = 0;
+	Tdata.data[6] = 0;
+	Tdata.data[7] = 0;
+
+	Steering_Send_Byte_B(0x55);
+	Steering_Send_Byte_B(0x77);
+	Steering_Send_Byte_B(Tdata.len);
+	check_sum = 0;
+	for (i = 0; i < Tdata.len; i++)
+	{
+		check_sum += Tdata.data[i];
+		Steering_Send_Byte_B(Tdata.data[i]);
+	}
+	Steering_Send_Byte_B(check_sum & 0x00ff);
 }
 
 
-//Uint16 Fly_Control_Voltage_Check(void)
-//{
-//	Uint16 Voltage_val[3];
-//	Uint16 Status=0;
-//	Status = 0;
-//	Voltage_val[0] = (Rdat.dat[2]<<8) | Rdat.dat[3];
-//	Voltage_val[1] = (Rdat.dat[4]<<8) | Rdat.dat[5];
-//	Voltage_val[2] = (Rdat.dat[8]<<8) | Rdat.dat[9];
-//
-//	if(Voltage_val[0]>2400 && Voltage_val[0]<3000)
-//	{
-//		Status = 0x07;
-//	}
-//
-//	if(Voltage_val[1]>2400 && Voltage_val[1]<3000)
-//	{
-//		Status |= 0x18;
-//	}
-//
-//	if(Voltage_val[2]>2400 && Voltage_val[2]<3000)
-//	{
-//		Status |= 0xE0;
-//	}
-//
-//	return Status;
-//}
-//
-////FK -> 24V -> 2736
-////DJ -> 24V -> 1458
-//Uint16 Batter_Voltage_Check(void)
-//{
-//	Uint16 Voltage_val[2];
-//	Uint16 Status=0;
-//	Status = 0;
-//	Voltage_val[0] = (Rdat.dat[0]<<8) | Rdat.dat[1];//DJ
-//	Voltage_val[1] = (Rdat.dat[6]<<8) | Rdat.dat[7];//FK
-//
-//	if(Voltage_val[0]>1458 && Voltage_val[0]<1800)//1620
-//	{
-//		Status |= 0x00ff;
-//		m_mis_fly_Messege.Steering_Batter=1;
-//	}
-//	else
-//	{
-//		Status &= 0xff00;
-//		m_mis_fly_Messege.Steering_Batter=0;
-//	}
-//
-//	if(Voltage_val[1]>2736)//3096
-//	{
-//		Status |= 0xff00;
-//		m_mis_fly_Messege.Fly_Control_Batter=1;
-//	}
-//	else
-//	{
-//		Status &= 0x00ff;
-//		m_mis_fly_Messege.Fly_Control_Batter=0;
-//	}
-//	return Status;
-//}
+void CommunicationStateMachine(Uint16 Receive_Data)
+{
+	switch(Com422_State)
+	{
+		case HeadFirst:
+				Com422_State = (Receive_Data == FirstCheckChar) 
+							 ? HeadSecond : HeadFirst;
+		break;
 
-//void Power_State_Machine(Uint16 Receive_Data)
-//{
-//	switch(Power_State)
-//	{
-//		case HeadFirst:
-//			if(Receive_Data == FirstCheckChar)
-//			{
-//				Power_State = HeadSecond;
-//			}
-//			else
-//			{
-//				Power_State = HeadFirst;
-//			}
-//		break;
-//
-//		case HeadSecond:
-//			if(Receive_Data == SecondCheckChar)
-//			{
-//				Power_State = header;
-//			}
-//			else
-//			{
-//				Power_State = HeadFirst;
-//			}
-//			c_sum = 0;
-//		break;
-//
-//		case header:
-//			if(Receive_Data == 0xA5)//c28
-//			{
-//				Power_State = Length;
-//				Rdat.header = Receive_Data;
-//				c_sum  =(c_sum + Receive_Data);
-//			}
-//			else
-//			{
-//				Power_State = HeadFirst;
-//			}
-//
-//		break;
-//
-//		case Length:
-//			Rdat.len = Receive_Data;
-//			c_sum  =(c_sum + Receive_Data);
-//			dat_cnt = 0;
-//			Power_State = ReceiveData;
-//		break;
-//
-//		case ReceiveData:
-//			Rdat.dat[dat_cnt] = Receive_Data;
-//			c_sum  =(c_sum + Receive_Data);
-//			dat_cnt++;
-//			if(dat_cnt >= Rdat.len)
-//			{
-//				Power_State = CheckSum;
-//				dat_cnt = 0;
-//			}
-//		break;
-//		case CheckSum:
-//			Rdat.checksum = c_sum&0xff;
-//			Power_State = HeadFirst;
-//			if(Receive_Data == Rdat.checksum)//���յ�����������ȷ��
-//			{
-//				if(Rdat.header == 0xA5)
-//				{
-//					if(0xA5A5 == Model_Type)
-//					{
-//					   *(Uint16*)(0x100004) = (Uint16)(((Rdat.dat[0]&0x0f)<<12)|((Rdat.dat[1]&0xff)<<4)|(Rdat.dat[6]&0x0f));
-//					   DELAY_US(ARINC429_Send);
-//					   *(Uint16*)(0x100005) = (Uint16)(((Rdat.dat[7]&0xff)<<8)|MISSILE_LAUCH_A429_POWER_1);
-//					   DELAY_US(3000);
-//
-//					   *(Uint16*)(0x100004) = (Uint16)(((Rdat.dat[2]&0x0f)<<12)|((Rdat.dat[3]&0xff)<<4)|(Rdat.dat[4]&0x0f));
-//					   DELAY_US(ARINC429_Send);
-//					   *(Uint16*)(0x100005) = (Uint16)(((Rdat.dat[5]&0xff)<<8)|MISSILE_LAUCH_A429_POWER_2);
-//					   DELAY_US(3000);
-//
-//					   *(Uint16*)(0x100004) = (Uint16)(((Rdat.dat[8]&0x0f)<<12)|((Rdat.dat[9]&0xff)<<4));
-//					   DELAY_US(ARINC429_Send);
-//					   *(Uint16*)(0x100005) = MISSILE_LAUCH_A429_POWER_3;
-//					   DELAY_US(3000);
-//
-//					   *(Uint16*)(0x100004) = (Uint16)((FW<<4)|((FI>>8)&0xf));
-//					   DELAY_US(ARINC429_Send);
-//					   *(Uint16*)(0x100005) = (Uint16)(((FI<<8)&0xff00)|MISSILE_LAUCH_A429_POWER_4);
-//					   DELAY_US(3000);
-//
-//					}
-//					else if(0x7F80 == Model_Type) // Fly Control Power Check
-//					{
-//						Power_cnt++;
-//						if(0xff == Fly_Control_Voltage_Check())
-//						{
-//							Voltage_Check_Cnt++;
-//						}
-//						if(Voltage_Check_Cnt >= 100)
-//						{
-//							Voltage_Check_Cnt = 0;
-//							Voltage_Check_Finish = 0x5AA5;
-//							Model_Type = 0;
-//							m_mis_fly_Messege.Fly_Control_Power=1;
-//							Missle_Normal(1);
-//						}
-//						if(Power_cnt >= 200)
-//						{
-//							Voltage_Check_Finish = 0;
-//							Model_Type = 0;
-//							m_mis_fly_Messege.Fly_Control_Power=0;
-//							Missle_Normal(0);
-//						}
-//					}
-//					else if(0x1234 == Model_Type)//Batter Voltage Check
-//					{
-//						if(0xFFFF == Batter_Voltage_Check())
-//						{
-//							Batter_cnt++;
-//						}
-//						if(Batter_cnt > 20)
-//						{
-//							Model_Type = 0;
-//							Batter_Check_Flag = 0xABCD;
-//						}
-//					   *(Uint16*)(0x100004) = (Uint16)(((Rdat.dat[0]&0x0f)<<12)|((Rdat.dat[1]&0xff)<<4)|(Rdat.dat[6]&0x0f));
-//					   DELAY_US(ARINC429_Send);
-//					   *(Uint16*)(0x100005) = (Uint16)(((Rdat.dat[7]&0xff)<<8)|MISSILE_LAUCH_A429_POWER_1);
-//					   DELAY_US(3000);
-//
-//					   *(Uint16*)(0x100004) = (Uint16)(((Rdat.dat[2]&0x0f)<<12)|((Rdat.dat[3]&0xff)<<4)|(Rdat.dat[4]&0x0f));
-//					   DELAY_US(ARINC429_Send);
-//					   *(Uint16*)(0x100005) = (Uint16)(((Rdat.dat[5]&0xff)<<8)|MISSILE_LAUCH_A429_POWER_2);
-//					   DELAY_US(3000);
-//
-//					   *(Uint16*)(0x100004) = (Uint16)(((Rdat.dat[8]&0x0f)<<12)|((Rdat.dat[9]&0xff)<<4));
-//					   DELAY_US(ARINC429_Send);
-//					   *(Uint16*)(0x100005) = MISSILE_LAUCH_A429_POWER_3;
-//					   DELAY_US(3000);
-//
-////					   *(Uint16*)(0x100004) = (Uint16)((FW<<4)|((FI>>8)&0xf));
-////					   DELAY_US(100);
-////					   *(Uint16*)(0x100005) = (Uint16)(((FI<<8)&0xff00)|MISSILE_LAUCH_A429_POWER_4);
-////					   DELAY_US(3000);
-//					}
-//				}
-//			}
-//			else//data receive err
-//			{
-//
-//			}
-//		break;
-//		default :
-//			Power_State = HeadFirst;
-//		break;
-//	}
-//}
+		case HeadSecond:
+			Com422_State = (Receive_Data == SecondCheckChar) 
+						 ? Length : HeadFirst;
+		break;
+
+		case Length:
+			Rdata.len      = Receive_Data;
+			Rdata.checksum = 0;
+			Com422_State   = Commond;
+		break;
+
+		case Commond:
+			dat_cnt         = 0;
+			Rdata.cmd       = Receive_Data;
+			Rdata.checksum += Receive_Data;
+			Com422_State    = ReceiveData;
+		break;
+
+		case ReceiveData:
+			if(dat_cnt >= Rdata.len)
+			{
+				Com422_State = CheckSum;
+			}
+			else
+			{
+				Rdata.data[dat_cnt] = Receive_Data;
+				Rdata.checksum     += Receive_Data;
+				dat_cnt++;
+			}
+		break;
+
+		case CheckSum:
+			Rdata.checksum = Rdata.checksum & 0x00ff;
+			if(Receive_Data == Rdata.checksum)//check sum
+			{
+				if(SELFCHECK == Rdata.cmd) // self check
+				{
+					m2d_Messege.Commond = SELFCHECK;
+				}
+				else if(DELIVERRY == Rdata.cmd) // 投放
+				{
+					m2d_Messege.Commond = DELIVERRY;
+					m2d_Messege.DeliveryStrategyNumber = Rdata.data[0]; // 投放策略编号
+					m2d_Messege.MotorRotateCount       = Rdata.data[1]; // 电机旋转次数
+					for (Uint16 i = 0; i < m2d_Messege.MotorRotateCount; i++)
+					{
+						m2d_Messege.RotateTurns[i]  = Rdata.data[2 + 3 * i]; // 旋转圈数
+						m2d_Messege.RotateTimes[i]  = Rdata.data[3 + 3 * i]; // 旋转总运行时间
+						m2d_Messege.TimeInterval[i] = Rdata.data[4 + 3 * i]; // 两次的时间间隔
+					}
+				}
+				else if(RESET == Rdata.cmd) //Reset
+				{
+					m2d_Messege.Commond = RESET;
+					m2d_Messege.HighSpeedReverseNumber = Rdata.data[0]; // 高速反转圈数
+					m2d_Messege.LowSpeedReverseNumber  = Rdata.data[1]; // 低速反转圈数
+				}
+				else if(APROXMT_ZERO == Rdata.cmd) //近似零位
+				{
+					m2d_Messege.Commond = APROXMT_ZERO;
+				}
+				else
+				{
+					// invalid commond
+				}
+			}
+			else//data receive err
+			{
+
+			}
+			Com422_State = HeadFirst;
+		break;
+
+		default :
+			Com422_State = HeadFirst;
+		break;
+	}
+}
 
 //Uint16 temp1,temp2,j,x_data[14];
 //void IMU_State_Machine(Uint16 Receive_Data)

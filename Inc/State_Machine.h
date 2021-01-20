@@ -10,21 +10,6 @@
 
 #include "include.h"
 
-//-------------- ����Э��------------------------//
-//����װ�� ---> ����
-#define F_LAUCH_MISSILE_A429_CONTROL      0x80	// �����֡�������ѯ��
-
-//------����Э��-----------------------
-//���� ---> ����װ��
-#define MISSILE_LAUCH_A429_STATUS     	  0xA0   // ״̬�֡�����������
-#define MISSILE_LAUCH_A429_AZIMUTH    	  0xA1   // ����ͷ��λ��
-#define MISSILE_LAUCH_A429_PITCH      	  0xA2   // ����ͷ������
-#define MISSILE_LAUCH_A429_POWER_1   	  0xA3   // ��ѹ1
-#define MISSILE_LAUCH_A429_POWER_2   	  0xA4   // ��ѹ2
-#define MISSILE_LAUCH_A429_POWER_3   	  0xA5   // ��ѹ3
-#define MISSILE_LAUCH_A429_POWER_4   	  0xA6   // ��ѹ4
-
- //��Ӧ������λ����  ����װ�� ---> ����
  #define LM_COMMOND_BIT 					8
  #define LM_LOCK_BIT  						16
  #define LM_POWER_BIT 						17
@@ -35,56 +20,72 @@
  #define LM_LAUCH_MASK 						0x01
  #define LM_POWER_MASK 						0x01
 
+#define SELFCHECK 		(1) // 自检
+#define DELIVERRY 		(2) // 投放
+#define RESET     		(3) // 复位
+#define APROXMT_ZERO 	(4) // 近似零位
 
- //��Ӧ������λ  ���� ---> ����װ��
- #define ML_NORMAL_BIT  					8
- #define ML_CAPTURE_BIT 					9
- #define ML_TYPE_BIT						10
-
- #define ML_FLY_CONTROL_POWER_BIT    		12
- #define ML_RAM_CHECK_BIT  					13
- #define ML_GUIDE_CHECK_BIT      			14
- #define ML_IMU_CHECK_BIT 					15
- #define ML_STEERING_CHECK_BIT 				16
- #define ML_FLY_CONTROL_BATTER_BIT  		17
- #define ML_STEERING_BATTER_BIT				18
- #define ML_ENGINE_FIRE_SIGLE_BIT			19
-
+#define SELFCHECK_REACT 		(0x81) // 自检应答
+#define DELIVERRY_REACT 		(0x82) // 投放应答
+#define RESET_REACT     		(0x83) // 复位应答
+#define APROXMT_ZERO_REACT 		(0x84) // 近似零位应答
 typedef struct _Master2DriverMessege
 {
-    Uint16 	Commond;
-}Master2DriverMessege;
+	Uint16 Commond;							// 命令字 1：自检；2：投放； 3：复位 4：近似零位
+
+	Uint16 DeliveryStrategyNumber;			// 投放策略编号
+	Uint16 MotorRotateCount;				// 电机旋转次数
+	Uint16 RotateTurns[32];					// 旋转圈数
+	Uint16 RotateTimes[32];					// 旋转总运行时间
+	Uint16 TimeInterval[32];				// 两次的时间间隔
+
+	Uint16 HighSpeedReverseNumber; 			// 高速反转圈数
+	Uint16 LowSpeedReverseNumber; 			// 低速反转圈数
+} Master2DriverMessege; //
 
 
- typedef struct _Driver2MasterMessege
- {
-	 Uint32 DriverBoardCheck;					// 驱动板自检故障码
-	 Uint32 MotorCheck;						    // 电机自检故障码
+typedef struct _Driver2MasterMessege
+{
+	Uint16 DriverBoardCheck;		// 驱动板自检故障码
+	Uint16 MotorCheck;				// 电机自检故障码
+	Uint16 SoftwareVersion_L;		// 驱动板软件版本号 low
+	Uint16 SoftwareVersion_H;		// 驱动板软件版本号 high
 
-	 Uint32 SoftwareVersion;					// 驱动板软件版本号
+	Uint16 MotorDriverVoltage;     	// 电机驱动电压
+	Uint16 MotorDriverCurrent;    	// 电机驱动电流
+	Uint16 MotorRotatePosition; 	// 电机旋转位置
+	Uint16 MotorAngularVelocity;	// 电机角速度
+	Uint16 MotorStatus;      		// 电机状态参数
 
- 	 Uint32 MotorDriverVoltage;       			// 电机驱动电压
- 	 Uint32 MotorDriverCurrent;      			// 电机驱动电流
- 	 Uint32 MotorRotatePosition;         	 	// 电机旋转位置
- 	 Uint32 MotorAngularVelocity;      			// 电机角速度
- 	 Uint32 MotorStatus;      		            // 电机状态参数
+	// 遥测上报数据包
+	Uint16 MotorTargetPosition;		// 电机目标位置
+	Uint16 MotorActualPosition;		// 电机实际转动位置
+	Uint16 ActualRotationRings;		// 本组电机实际旋转圈数
+	Uint16 ThrowStatus;        		// 投放状态
+}Driver2MasterMessege;
 
- 	 // 遥测上报数据包
- 	 Uint32 MotorTargetPosition;   		        // 电机目标位置
- 	 Uint32 MotorActualPosition;    		    // 电机实际转动位置
- 	 Uint32 ActualRotationRings;                // 本组电机实际旋转圈数
- 	 Uint32 ThrowStatus;                        // 投放状态
-  }Driver2MasterMessege;
+extern Master2DriverMessege m2d_Messege;
+extern Driver2MasterMessege d2m_Messege;
 
-//extern Driver_To_Master_Sta_Info m_mis_fly_Messege;
-//extern Fly_To_Mis_Ctr_Info m_fly_mis_Messege;
-//
-//void StateMachine_Init(void);
-//void Power_State_Machine(Uint16 Receive_Data);
-//void IMU_State_Machine(Uint16 Receive_Data);
-//
-//void ARINC_Decode(Uint32 Dat,Fly_To_Mis_Ctr_Info *Control_Information);
-//void ARINC_Encode(Mis_To_Fly_Sta_Info *Status_Information);
-//Uint16 Fly_Control_Voltage_Check(void);
-//void Self_Check_State_Machine(Uint16 *Tartget_Position,Uint16 Feedback_Position);
+void CommandResponse(Uint16 rsp);
+/**
+ * @brief self check feedback function
+ */
+void BLDC_SelfCheck(void);
+
+/**
+ * @brief the deliver feedback function
+ */
+void BLDC_Delivery(void);
+
+/**
+ * @brief the reset commond feedback function
+ */
+void BLDC_Reset(void);
+
+/**
+ * @brief the 422 communication receive function
+ */
+void CommunicationStateMachine(Uint16 Receive_Data);
+
 #endif /* STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_ */
