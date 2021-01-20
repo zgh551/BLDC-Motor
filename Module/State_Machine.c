@@ -47,12 +47,13 @@ Uint16 TelemetrySendFlag;
 
 void StateMachine_Init(void)
 {
+    Uint16 i;
 	//communication state machine
 	Com422_State 	= HeadFirst;
-	Rdata.header 	= 0;
+	Rdata.cmd 	    = 0;
 	Rdata.len    	= 0;
 	Rdata.checksum	= 0;
-	for(i=0; i < 240; i++)
+	for(i = 0; i < 240; i++)
 	{
 		Rdata.data[i] = 0;
 	}
@@ -65,7 +66,7 @@ void BLDC_SelfCheck(void)
 
 	Tdata.len = 8;
 	Tdata.data[0] = SELFCHECK_REACT;
-	Tdata.data[1] = d2m_Messege.DriverBoardCheck; // 驱动板自检故障码		
+	Tdata.data[1] = d2m_Messege.DriverBoardCheck; // 驱动板自检故障码
 	Tdata.data[2] = d2m_Messege.MotorCheck;	   // 电机自检故障码
 	Tdata.data[3] = d2m_Messege.SoftwareVersion_L;  // 驱动板软件版本号 低
 	Tdata.data[4] = d2m_Messege.SoftwareVersion_H;  // 驱动板软件版本号 高
@@ -168,9 +169,9 @@ void BLDC_CycleSend500ms(void)
 	Uint16 temp_data = 0;
 	Tdata.len = 8;
 	Tdata.data[0] = DRIVER_BOARD_CYCLE_SEND;
-	Tdata.data[1] = d2m_Messege.MotorDriverVoltage * 5 ; // 电机驱动电压	
+	Tdata.data[1] = d2m_Messege.MotorDriverVoltage * 5 ; // 电机驱动电压
 	Tdata.data[2] = d2m_Messege.MotorDriverCurrent * 10; // 电机驱动电流
-	temp_data = (Uint16)d2m_Messege.MotorRotatePosition * 0.5; // 电机旋转位置 
+	temp_data = (Uint16)d2m_Messege.MotorRotatePosition * 0.5; // 电机旋转位置
 	Tdata.data[3] =  temp_data & 0x00ff; 
 	Tdata.data[4] = (temp_data >> 8) & 0x00ff; 
 	temp_data = d2m_Messege.MotorAngularVelocity; // 电机角速度
@@ -199,7 +200,7 @@ void BLDC_TelemetrySend(void)
 	temp_data = (Uint16)d2m_Messege.MotorTargetPosition * 0.5; // 电机目标位置
 	Tdata.data[1] =  temp_data & 0x00ff;  	
 	Tdata.data[2] = (temp_data >> 8) & 0x00ff;
-	temp_data = (Uint16)d2m_Messege.MotorActualPosition * 0.5; // 电机实际转动位置 
+	temp_data = (Uint16)d2m_Messege.MotorActualPosition * 0.5; // 电机实际转动位置
 	Tdata.data[3] =  temp_data & 0x00ff; 
 	Tdata.data[4] = (temp_data >> 8) & 0x00ff; 
 	Tdata.data[5] = d2m_Messege.MotorActualPosition; // 电机实际转动位置
@@ -220,6 +221,7 @@ void BLDC_TelemetrySend(void)
 
 void CommunicationStateMachine(Uint16 Receive_Data)
 {
+    Uint16 i;
 	switch(Com422_State)
 	{
 		case HeadFirst:
@@ -271,7 +273,7 @@ void CommunicationStateMachine(Uint16 Receive_Data)
 					m2d_Messege.Commond = DELIVERRY;
 					m2d_Messege.DeliveryStrategyNumber = Rdata.data[0]; // 投放策略编号
 					m2d_Messege.MotorRotateCount       = Rdata.data[1]; // 电机旋转次数
-					for (Uint16 i = 0; i < m2d_Messege.MotorRotateCount; i++)
+					for (i = 0; i < m2d_Messege.MotorRotateCount; i++)
 					{
 						m2d_Messege.RotateTurns[i]  = Rdata.data[2 + 3 * i]; // 旋转圈数
 						m2d_Messege.RotateTimes[i]  = Rdata.data[3 + 3 * i]; // 旋转总运行时间

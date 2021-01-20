@@ -1,7 +1,7 @@
 /*
  * Steering_Xintf.c
  *
- *  Created on: 2016Äê3ÔÂ30ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½30ï¿½ï¿½
  *      Author: ZGH
  */
 
@@ -34,16 +34,16 @@ void Init_Zone(void)
     // When using ready, ACTIVE must be 1 or greater
     // Lead must always be 1 or greater
     // Zone write timing
-    XintfRegs.XTIMING7.bit.XWRLEAD   = 2;
-    XintfRegs.XTIMING7.bit.XWRACTIVE = 4;
-    XintfRegs.XTIMING7.bit.XWRTRAIL  = 2;
+    XintfRegs.XTIMING7.bit.XWRLEAD   = 3;
+    XintfRegs.XTIMING7.bit.XWRACTIVE = 7;
+    XintfRegs.XTIMING7.bit.XWRTRAIL  = 3;
     // Zone read timing
-    XintfRegs.XTIMING7.bit.XRDLEAD   = 2;
-    XintfRegs.XTIMING7.bit.XRDACTIVE = 4;
-    XintfRegs.XTIMING7.bit.XRDTRAIL  = 2;
+    XintfRegs.XTIMING7.bit.XRDLEAD   = 3;
+    XintfRegs.XTIMING7.bit.XRDACTIVE = 7;
+    XintfRegs.XTIMING7.bit.XRDTRAIL  = 3;
 
     // don't double all Zone read/write lead/active/trail timing
-    XintfRegs.XTIMING7.bit.X2TIMING = 0;
+    XintfRegs.XTIMING7.bit.X2TIMING = 1;
 
     // Zone will not sample XREADY signal
     XintfRegs.XTIMING7.bit.USEREADY = 0;

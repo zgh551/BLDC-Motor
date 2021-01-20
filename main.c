@@ -8,7 +8,7 @@ extern Uint16 RamfuncsLoadSize;
 
 //static Uint32 ARINC_Dat_H,ARINC_Dat_L;
 //static Uint32 ARINC_Data;
-//static Uint16 IMU_Dat=0,Power_Dat;
+static Uint16 Position = 0, Velocity = 0, Fault = 0;
 
 int main(void) {
 // Step 1. Initialize System Control:
@@ -18,7 +18,7 @@ int main(void) {
 // Step 2. Initialize GPIO:
 //   Realy_Init();
 //   FIFO_state();
-   Digital_IO_Init();
+
    LedInit();
    InitSciGpio();
 //   InitEQepGpio();
@@ -68,6 +68,7 @@ int main(void) {
 //-XINTF Module Initialize for AD2S1210
    Init_Zone();
 
+   AD2S1210_Init();
 //-ADC Module Init
 //   Steering_ADC_Init();
 //   Steering_ADC_EPwm();
@@ -108,36 +109,47 @@ int main(void) {
    ERTM;   // Enable Global realtime interrupt DBGM
 
 // Step 6. IDLE loop. Just sit and loop forever (optional):
-   while(1)
-   {
-      if (SELFCHECK == m2d_Messege.Commond)
-      {
-         BLDC_SelfCheck();
-         m2d_Messege.Commond = 0;
-      }
-      else if (DELIVERRY == m2d_Messege.Commond)
-      {
-         CommandResponse(DELIVERRY_REACT);
-         m2d_Messege.Commond = 0;
-      }
-      else if (RESET == m2d_Messege.Commond)
-      {
-         CommandResponse(RESET_REACT);
-         m2d_Messege.Commond = 0;
-      }
-      else if (APROXMT_ZERO == m2d_Messege.Commond)
-      {
-         CommandResponse(APROXMT_ZERO_REACT);
-         m2d_Messege.Commond = 0;
-      }
-      else
-      {
-         // do nothing
-      }
+    while(1)
+    {
+        if (SELFCHECK == m2d_Messege.Commond)
+        {
+            BLDC_SelfCheck();
+            m2d_Messege.Commond = 0;
+        }
+        else if (DELIVERRY == m2d_Messege.Commond)
+        {
+            CommandResponse(DELIVERRY_REACT);
+            m2d_Messege.Commond = 0;
+        }
+        else if (RESET == m2d_Messege.Commond)
+        {
+            CommandResponse(RESET_REACT);
+            m2d_Messege.Commond = 0;
+        }
+        else if (APROXMT_ZERO == m2d_Messege.Commond)
+        {
+            CommandResponse(APROXMT_ZERO_REACT);
+            m2d_Messege.Commond = 0;
+        }
+        else
+        {
+        // do nothing
+        }
 
-      if (0xAABB = TelemetrySendFlag)
-      {
-         BLDC_TelemetrySend();
-      }
-   }
+        if (0xAABB == TelemetrySendFlag)
+        {
+            //         BLDC_TelemetrySend();
+
+            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(CONTROL));
+            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(POSITION_L));
+            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(LOS_THRESHOLD));
+
+            AD2S1210_DataRead(&Position, &Velocity, &Fault);
+            Steering_Send_Byte_B(0xA5);
+            Steering_Send_Byte_B(Position);
+            Steering_Send_Byte_B(Velocity);
+            Steering_Send_Byte_B(Fault);
+            TelemetrySendFlag = 0;
+        }
+    }
 }

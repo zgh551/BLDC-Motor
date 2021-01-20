@@ -70,7 +70,6 @@ void Steering_SCIB_Init(void)
 // ISR functions found within this file.
 	EALLOW;	// This is needed to write to EALLOW protected registers
 	PieVectTable.SCIRXINTB = &scibRxFifoIsr;
-//	PieVectTable.SCITXINTA = &sciaTxFifoIsr;
 	EDIS;   // This is needed to disable write to EALLOW protected registers
 
 	//BASE INIT
@@ -97,7 +96,7 @@ void Steering_SCIB_Init(void)
 // Enable interrupts required for this example
    IER |= M_INT9;	// Enable CPU INT9
    PieCtrlRegs.PIEIER9.bit.INTx3=1;     // PIE Group 9, Int3
-//   PieCtrlRegs.PIEIER9.bit.INTx2=1;     // PIE Group 9, INT4
+//   PieCtrlRegs.PIEIER9.bit.INTx4=1;     // PIE Group 9, INT4
 
 }
 

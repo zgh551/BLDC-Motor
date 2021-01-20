@@ -88,6 +88,7 @@ void BLDC_Delivery(void);
  */
 void BLDC_Reset(void);
 
+void BLDC_TelemetrySend(void);
 /**
  * @brief the 422 communication receive function
  */

@@ -6,7 +6,8 @@
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
 #include "Digital_IO.h"
-void Digital_IO_Init(void)
+
+void AD2S1210_IO_Init(void)
 {
 	EALLOW;
     GpioCtrlRegs.GPBMUX2.bit.GPIO48 = 0;
@@ -19,6 +20,8 @@ void Digital_IO_Init(void)
 	GpioCtrlRegs.GPBDIR.bit.GPIO51  = 1;//A0
     GpioCtrlRegs.GPBMUX2.bit.GPIO52 = 0;
     GpioCtrlRegs.GPBDIR.bit.GPIO52  = 1;//A1
+    GpioCtrlRegs.GPBMUX2.bit.GPIO55 = 0;
+    GpioCtrlRegs.GPBDIR.bit.GPIO55  = 1;//Reset
 	EDIS;
 }
 
@@ -47,10 +50,21 @@ void AD2S1210_Mode_A1(Uint16 state)
 	GpioDataRegs.GPBDAT.bit.GPIO52 = state;
 }
 
+void AD2S1210_Reset(Uint16 state)
+{
+    GpioDataRegs.GPBDAT.bit.GPIO55 = state;
+}
+
+
 void AD2S1210_Init(void)
 {
+    AD2S1210_IO_Init();
     AD2S1210_Res0(0);
     AD2S1210_Res1(1);
+
+    AD2S1210_Reset(0);
+    DELAY_US(1000);
+    AD2S1210_Reset(1);
 }
 
 void AD2S1210_ConfigModeWrite(Uint16 add, Uint16 dat)
@@ -68,9 +82,9 @@ Uint16 AD2S1210_ConfigModeRead(Uint16 add)
     AD2S1210_Mode_A0(1);
     AD2S1210_Mode_A1(1);
     DELAY_US(10);
-    *(Uint16*)(0x200000) = add;
-    DELAY_US(100);
-    return *(Uint16*)(0x200000);
+    *(Uint16*)(0x200001) = add;
+    DELAY_US(1);
+    return *(Uint16*)(0x200001);
 }
 
 void AD2S1210_DataRead(Uint16* pos, Uint16* vel, Uint16* fault)

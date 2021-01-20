@@ -44,6 +44,10 @@ Uint32 ARINC_Dat_H,ARINC_Dat_L;
 volatile Uint32 ARINC_Data;
 volatile Uint16 Luach_Flag = 0,Power_Flag = 0;
 volatile Uint16 FK_Dat=0,IMU_Dat=0,DY_Dat=0,Power_Dat=0;
+
+
+Uint16 fault_status;
+
 // Connected to INT13 of CPU (use MINT13 mask):
 // Note CPU-Timer1 is reserved for TI use, however XINT13
 // ISR can be used by the user.
@@ -343,27 +347,14 @@ interrupt void  TINT0_ISR(void)      // CPU-Timer 0
     cnt_500ms = (cnt_500ms + 1) % 100;
     if(0 == cnt_500ms)
     {
-      TelemetrySendFlag = 0xAABB;
+        TelemetrySendFlag = 0xAABB;
     }
-//	 cnt_3ms = (cnt_3ms + 1)%2000;
-//	 if(cnt_3ms > 999)
-//	 {
-//		 Target_Position = 2000 - cnt_3ms;
-//	 }
-//	 else
-//	 {
-//		 Target_Position = cnt_3ms;
-//	 }
-//	 Target_Position = 500*sin(2*3.14*cnt/1000)+500;
 
-//	 Self_Check_State_Machine(&Target_Position,FW);
-	 if(cnt == 0)
-	 {
-	     LedRunning();
-	     Steering_Send_Byte_B(0xaa);
+    if(cnt == 0)
+    {
+        LedRunning();
 
-       Uint16 fault_status = AD2S1210_ConfigModeRead(FAULT);
-	 }
+    }
 //	 Target_Position = 800;
 //	 if(0 == cnt_3ms)
 //	 {
@@ -383,9 +374,19 @@ interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 //			 DELAY_US(60);
 //		 }
 //	 }
-
-  // To receive more interrupts from this PIE group, acknowledge this interrupt
-     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+    //   cnt_3ms = (cnt_3ms + 1)%2000;
+    //   if(cnt_3ms > 999)
+    //   {
+    //       Target_Position = 2000 - cnt_3ms;
+    //   }
+    //   else
+    //   {
+    //       Target_Position = cnt_3ms;
+    //   }
+    //   Target_Position = 500*sin(2*3.14*cnt/1000)+500;
+    //   Self_Check_State_Machine(&Target_Position,FW);
+// To receive more interrupts from this PIE group, acknowledge this interrupt
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
 
 
