@@ -30,9 +30,13 @@ void AD2S1210_IO_Init(void);
 void AD2S1210_Sample(Uint16 state);
 void AD2S1210_Res0(Uint16 state);
 void AD2S1210_Res1(Uint16 state);
-void AD2S1210_Mode_A0(Uint16 state);
-void AD2S1210_Mode_A1(Uint16 state);
 void AD2S1210_Reset(Uint16 state);
+
+Uint16 AD2S1210_Dos(void);
+Uint16 AD2S1210_Lot(void);
+Uint16 AD2S1210_Dir(void);
+
+void AD2S1210_SampleUpdate(void);
 
 void AD2S1210_Init(void);
 
@@ -40,7 +44,7 @@ void AD2S1210_ConfigModeWrite(Uint16 add, Uint16 dat);
 
 Uint16 AD2S1210_ConfigModeRead(Uint16 add);
 
-void AD2S1210_DataRead(Uint16* pos, Uint16* vel, Uint16* fault);
+Uint16 AD2S1210_DataRead(Uint16* pos, Uint16* vel);
 
-
+Uint16 AD2S1210_ResultRead(float* pos, float* vel);
 #endif /* STEERINGENGINE_28335_V4_INC_DIGITAL_IO_H_ */

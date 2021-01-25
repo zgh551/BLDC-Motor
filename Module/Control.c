@@ -1,7 +1,7 @@
 /*
  * Control.c
  *
- *  Created on: 2016Äê3ÔÂ1ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½1ï¿½ï¿½
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -21,27 +21,33 @@
 #define POSITION_UPDATE_FREQ   5000
 #define POSITION_UPDATE_DT     (float)(1.0/POSITION_UPDATE_FREQ)
 
-#define CURRENT_UPDATE_FREQ   5000
-#define CURRENT_UPDATE_DT     (float)(1.0/CURRENT_UPDATE_FREQ)
+#define CURRENT_UPDATE_FREQ   10000
+#define CURRENT_UPDATE_DT     (float)(1.0f / CURRENT_UPDATE_FREQ)
 
-PidObject PID_Position,PID_Current;
-int16 PositionOutput,CurrentOutput;
+PidObject PID_Current_D, PID_Current_Q;
 
 void Control_Init(void)
 {
-	//Position Control
-	pidInit(&PID_Position, 0, PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD, POSITION_UPDATE_DT);
-	pidSetIntegralLimit(&PID_Position, PID_POSITION_INTEGRATION_LIMIT);
-	//Current Control
-//	pidInit(&PID_Current, 0, PID_CURRENT_KP, PID_CURRENT_KI, PID_CURRENT_KD, POSITION_UPDATE_DT);
-//	pidSetIntegralLimit(&PID_Current, PID_CURRENT_INTEGRATION_LIMIT);
+	//Current D Control
+	pidInit(&PID_Current_D, 0, PID_CURRENT_D_KP, PID_CURRENT_D_KI, PID_CURRENT_D_KD, CURRENT_UPDATE_DT);
+	pidSetIntegralLimit(&PID_Current_D, PID_CURRENT_D_INTEGRATION_LIMIT);
+
+    //Current Q Control
+    pidInit(&PID_Current_Q, 0, PID_CURRENT_Q_KP, PID_CURRENT_Q_KI, PID_CURRENT_Q_KD, CURRENT_UPDATE_DT);
+    pidSetIntegralLimit(&PID_Current_Q, PID_CURRENT_Q_INTEGRATION_LIMIT);
 }
 
 /******Position function*********/
-void controllerCorrectPositionPID(float PositionActual,float PositionDesired,int16 *PositionOutput)
+void CurrentD_ControllerPID(float i_desired, float i_actual, float *i_out)
 {
-	pidSetDesired(&PID_Position, PositionDesired);
-	TRUNCATE_SINT16(*PositionOutput, pidUpdate(&PID_Position, PositionActual, 1));
+	pidSetDesired(&PID_Current_D, i_desired);
+	*i_out = pidUpdate(&PID_Current_D, i_actual, 1);
+}
+
+void CurrentQ_ControllerPID(float i_desired, float i_actual, float *i_out)
+{
+    pidSetDesired(&PID_Current_Q, i_desired);
+    *i_out = pidUpdate(&PID_Current_Q, i_actual, 1);
 }
 
 //Get the position PID output

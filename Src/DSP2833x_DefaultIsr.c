@@ -48,6 +48,8 @@ volatile Uint16 FK_Dat=0,IMU_Dat=0,DY_Dat=0,Power_Dat=0;
 
 Uint16 fault_status;
 
+float v_alpha, v_beta;
+
 // Connected to INT13 of CPU (use MINT13 mask):
 // Note CPU-Timer1 is reserved for TI use, however XINT13
 // ISR can be used by the user.
@@ -350,39 +352,14 @@ interrupt void  TINT0_ISR(void)      // CPU-Timer 0
         TelemetrySendFlag = 0xAABB;
     }
 
+//    InverseParkTransform(5, 0, 0, &v_alpha, &v_beta);
+//
+//    SVPWM(v_alpha, v_beta);
+
     if(cnt == 0)
     {
         LedRunning();
-
     }
-//	 Target_Position = 800;
-//	 if(0 == cnt_3ms)
-//	 {
-//		 for(i=0;i<64;i++)
-//		 {
-//			 *(Uint16*)(0x100000) = i;  //0X3F
-//			 DELAY_US(60);
-//		 }
-//		 for(i=0;i<42;i++)
-//		 {
-//			 *(Uint16*)(0x100001) = 3*i;//0X7B
-//			 DELAY_US(60);
-//		 }
-//		 for(i=0;i<90;i++)
-//		 {
-//			 *(Uint16*)(0x100002) = 2*i;//0x
-//			 DELAY_US(60);
-//		 }
-//	 }
-    //   cnt_3ms = (cnt_3ms + 1)%2000;
-    //   if(cnt_3ms > 999)
-    //   {
-    //       Target_Position = 2000 - cnt_3ms;
-    //   }
-    //   else
-    //   {
-    //       Target_Position = cnt_3ms;
-    //   }
     //   Target_Position = 500*sin(2*3.14*cnt/1000)+500;
     //   Self_Check_State_Machine(&Target_Position,FW);
 // To receive more interrupts from this PIE group, acknowledge this interrupt
@@ -823,7 +800,7 @@ interrupt void DINTCH1_ISR(void)     // DMA
   // Insert ISR Code here
 
   // To receive more interrupts from this PIE group, acknowledge this interrupt
-	ADC_Value = DMABuf1[0];
+//	ADC_Value = DMABuf1[0];
   // To receive more interrupts from this PIE group, acknowledge this interrupt
    PieCtrlRegs.PIEACK.all = PIEACK_GROUP7;
 
@@ -1135,7 +1112,7 @@ interrupt void XINT3_ISR(void)  // External Interrupt
 {
 
   // Insert ISR Code here
-	Data_Type = (GpioDataRegs.GPBDAT.all &0x70000000)>>28;
+//	Data_Type = (GpioDataRegs.GPBDAT.all &0x70000000)>>28;
 //	switch(Data_Type)
 //	{
 //	case 0:

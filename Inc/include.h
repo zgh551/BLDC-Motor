@@ -1,7 +1,7 @@
 /*
  * include.h
  *
- *  Created on: 2016Äê6ÔÂ1ÈÕ
+ *  Created on: 2016ï¿½ï¿½6ï¿½ï¿½1ï¿½ï¿½
  *      Author: ZGH
  */
 
@@ -24,8 +24,8 @@
 #include "ExternalInterrupt.h"
 #include "SelfCheck.h"
 #include "Digital_IO.h"
+#include "FOC.h"
 
 extern Uint16 FW,FI;
 
-#define Rocket_Bomb 0
 #endif /* STEERINGENGINE_28335_V4_INC_INCLUDE_H_ */

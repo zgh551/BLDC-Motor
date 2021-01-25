@@ -54,23 +54,52 @@ typedef struct _Driver2MasterMessege
 	Uint16 SoftwareVersion_L;		// 驱动板软件版本号 low
 	Uint16 SoftwareVersion_H;		// 驱动板软件版本号 high
 
-	Uint16 MotorDriverVoltage;     	// 电机驱动电压
-	Uint16 MotorDriverCurrent;    	// 电机驱动电流
-	Uint16 MotorRotatePosition; 	// 电机旋转位置
-	Uint16 MotorAngularVelocity;	// 电机角速度
-	Uint16 MotorStatus;      		// 电机状态参数
+	Uint16 MotorStatus;             // 电机状态参数
+	float MotorDriverVoltage;     	// 电机驱动电压
+	float MotorDriverCurrent;    	// 电机驱动电流
 
 	// 遥测上报数据包
 	Uint16 MotorTargetPosition;		// 电机目标位置
 	Uint16 MotorActualPosition;		// 电机实际转动位置
 	Uint16 ActualRotationRings;		// 本组电机实际旋转圈数
 	Uint16 ThrowStatus;        		// 投放状态
+
+	// User test data
+	// Motor current
+	float MotorDriver_IA;           // 电机驱动A相电流
+	float MotorDriver_IB;           // 电机驱动B相电流
+	float MotorDriver_IC;           // 电机驱动C相电流
+
+	// the clark tranisform current
+	float I_alpha;                  // alpha 电流
+	float I_beta;                   // beta  电流
+
+	float I_d;                      //
+	float I_q;
+
+    float V_d;                      //
+    float V_q;
+
+    float V_alpha;                      //
+    float V_beta;
+	// AD2S1210
+	float AngularPosition;          // 角度位置 信息 [0, 360]deg
+	float AngularVelocity;          // 角速度信息 rps
+	Uint16 FaultState;              // AD2S1210错误状态
+
+	Uint16 ControlPhaseState;       // 控制相位状态
 }Driver2MasterMessege;
 
 extern Master2DriverMessege m2d_Messege;
 extern Driver2MasterMessege d2m_Messege;
 
 extern Uint16 TelemetrySendFlag;
+
+/**
+ * @brief the state machine initialize
+ */
+void StateMachine_Init(void);
+
 
 void CommandResponse(Uint16 rsp);
 /**
@@ -88,7 +117,16 @@ void BLDC_Delivery(void);
  */
 void BLDC_Reset(void);
 
+/**
+ * @brief the 500ms cycle send
+ */
+void BLDC_CycleSend500ms(void);
+
+/**
+ * @brief the Telemetry send
+ */
 void BLDC_TelemetrySend(void);
+
 /**
  * @brief the 422 communication receive function
  */

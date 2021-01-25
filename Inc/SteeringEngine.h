@@ -1,7 +1,7 @@
 /*
  * SteeringEngine.h
  *
- *  Created on: 2016Äê3ÔÂ4ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½4ï¿½ï¿½
  *      Author: ZGH
  */
 
@@ -10,8 +10,20 @@
 
 #include "include.h"
 
-void ePWM_Duty(Uint16 duty);
-int16 limitPosition(int16 value);
-void SteeringPowerOutput(int16 PositionPIDOutput);
+void BLDC_IO_Init(void);
+
+void InitEPwmBLDC(void);
+
+void BLDC_ShutDown(Uint16 state);
+
+void ePWM1_LowLevelDutyTime(float time); // us
+
+void ePWM2_LowLevelDutyTime(float time); // us
+
+void ePWM3_LowLevelDutyTime(float time); // us
+
+//int16 limitPosition(int16 value);
+//
+//void SteeringPowerOutput(int16 PositionPIDOutput);
 
 #endif /* STEERINGENGINE_28335_V3_INC_STEERINGENGINE_H_ */

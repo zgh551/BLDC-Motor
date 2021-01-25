@@ -1,7 +1,7 @@
 /*
  * PID.h
  *
- *  Created on: 2016Äê3ÔÂ1ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½1ï¿½ï¿½
  *      Author: ZGH
  */
 
@@ -10,7 +10,7 @@
 
 #include "include.h"
 
-//                             Æ½ºâ
+//                             Æ½ï¿½ï¿½
 #define PID_POSITION_KP  4.2 //3.5
 #define PID_POSITION_KI  0.05
 #define PID_POSITION_KD  0.12 //0.12
@@ -20,6 +20,16 @@
 #define PID_CURRENT_KI  0.0
 #define PID_CURRENT_KD  0.12 //0.12
 #define PID_CURRENT_INTEGRATION_LIMIT    100.0
+
+#define PID_CURRENT_D_KP  3.5 //3.5
+#define PID_CURRENT_D_KI  0.0
+#define PID_CURRENT_D_KD  0.12 //0.12
+#define PID_CURRENT_D_INTEGRATION_LIMIT    100.0
+
+#define PID_CURRENT_Q_KP  3.5 //3.5
+#define PID_CURRENT_Q_KI  0.0
+#define PID_CURRENT_Q_KD  0.12 //0.12
+#define PID_CURRENT_Q_INTEGRATION_LIMIT    100.0
 
 #define DEFAULT_PID_INTEGRATION_LIMIT  	 5000.0
 

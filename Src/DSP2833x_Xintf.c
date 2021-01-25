@@ -137,7 +137,7 @@ void InitXintf(void)
    //Force a pipeline flush to ensure that the write to
    //the last register configured occurs before returning.
 
-   InitXintf16Gpio();
+
 // InitXintf32Gpio();
 
    asm(" RPT #7 || NOP");
@@ -227,13 +227,13 @@ void InitXintf16Gpio()
      GpioCtrlRegs.GPAMUX2.bit.GPIO30 = 3;  // XA18
      GpioCtrlRegs.GPAMUX2.bit.GPIO29 = 3;  // XA19
 
-//     GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 3;  // XREADY
-//	 GpioCtrlRegs.GPBMUX1.bit.GPIO35 = 3;  // XRNW
+     GpioCtrlRegs.GPBMUX1.bit.GPIO34 = 3;  // XREADY
+	 GpioCtrlRegs.GPBMUX1.bit.GPIO35 = 3;  // XRNW
      GpioCtrlRegs.GPBMUX1.bit.GPIO38 = 3;  // XWE0
 
 //     GpioCtrlRegs.GPBMUX1.bit.GPIO36 = 3;  // XZCS0
      GpioCtrlRegs.GPBMUX1.bit.GPIO37 = 3;  // XZCS7
-//     GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 3;  // XZCS6
+     GpioCtrlRegs.GPAMUX2.bit.GPIO28 = 3;  // XZCS6
      EDIS;
 }
 

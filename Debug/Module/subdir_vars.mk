@@ -10,6 +10,7 @@ C_SRCS += \
 ../Module/Control.c \
 ../Module/Digital_IO.c \
 ../Module/ExternalInterrupt.c \
+../Module/FOC.c \
 ../Module/Led.c \
 ../Module/PID.c \
 ../Module/Relay.c \
@@ -26,6 +27,7 @@ C_DEPS += \
 ./Module/Control.d \
 ./Module/Digital_IO.d \
 ./Module/ExternalInterrupt.d \
+./Module/FOC.d \
 ./Module/Led.d \
 ./Module/PID.d \
 ./Module/Relay.d \
@@ -42,6 +44,7 @@ OBJS += \
 ./Module/Control.obj \
 ./Module/Digital_IO.obj \
 ./Module/ExternalInterrupt.obj \
+./Module/FOC.obj \
 ./Module/Led.obj \
 ./Module/PID.obj \
 ./Module/Relay.obj \
@@ -58,6 +61,7 @@ OBJS__QUOTED += \
 "Module\Control.obj" \
 "Module\Digital_IO.obj" \
 "Module\ExternalInterrupt.obj" \
+"Module\FOC.obj" \
 "Module\Led.obj" \
 "Module\PID.obj" \
 "Module\Relay.obj" \
@@ -74,6 +78,7 @@ C_DEPS__QUOTED += \
 "Module\Control.d" \
 "Module\Digital_IO.d" \
 "Module\ExternalInterrupt.d" \
+"Module\FOC.d" \
 "Module\Led.d" \
 "Module\PID.d" \
 "Module\Relay.d" \
@@ -90,6 +95,7 @@ C_SRCS__QUOTED += \
 "../Module/Control.c" \
 "../Module/Digital_IO.c" \
 "../Module/ExternalInterrupt.c" \
+"../Module/FOC.c" \
 "../Module/Led.c" \
 "../Module/PID.c" \
 "../Module/Relay.c" \

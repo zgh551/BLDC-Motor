@@ -1,8 +1,8 @@
 /*
  * ExternalInterrupt.c
  *
- *  Created on: 2016Äê4ÔÂ20ÈÕ
- *      Author: ZGH
+ *  Created on: 2016ï¿½ï¿½4ï¿½ï¿½20ï¿½ï¿½
+ *      Author: Zachary
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
 #include "ExternalInterrupt.h"

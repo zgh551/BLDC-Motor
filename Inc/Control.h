@@ -1,7 +1,7 @@
 /*
  * Control.h
  *
- *  Created on: 2016Äê3ÔÂ1ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½1ï¿½ï¿½
  *      Author: ZGH
  */
 
@@ -10,11 +10,19 @@
 
 #include "include.h"
 
+/*
+ * @brief the pid initialize
+ */
 void Control_Init(void);
-void controllerCorrectPositionPID(float PositionActual,float PositionDesired,int16 *PositionOutput);
-//void controllerGetActuatorPositionOutput(int16 *Position);
 
-void controllerCorrectCurrentPID(float CurrentActual,float CurrentDesired,int16 *CurrentOutput);
-//void controllerGetActuatorCurrentOutput(int16 *Current);
+/*
+ * @brief the current d control pid
+ */
+void CurrentD_ControllerPID(float i_desired, float i_actual, float *i_out);
+
+/*
+ * @brief the current q control pid
+ */
+void CurrentQ_ControllerPID(float i_desired, float i_actual, float *i_out);
 
 #endif /* STEERINGENGINE_28335_V3_INC_CONTROL_H_ */

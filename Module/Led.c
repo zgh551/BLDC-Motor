@@ -16,8 +16,8 @@ void LedInit(void)
     GpioCtrlRegs.GPBMUX2.bit.GPIO57=0;
     GpioCtrlRegs.GPBDIR.bit.GPIO57 =1;
 
-    GpioCtrlRegs.GPAMUX2.bit.GPIO17=0;
-    GpioCtrlRegs.GPADIR.bit.GPIO17 =1;
+//    GpioCtrlRegs.GPAMUX2.bit.GPIO17=0;
+//    GpioCtrlRegs.GPADIR.bit.GPIO17 =1;
 	EDIS;
 }
 
@@ -32,7 +32,7 @@ void LedErr(void)
     GpioDataRegs.GPBTOGGLE.bit.GPIO57=1;
 }
 
-void LedTx(void)
-{
-    GpioDataRegs.GPATOGGLE.bit.GPIO17=1;
-}
+//void LedTx(void)
+//{
+//    GpioDataRegs.GPATOGGLE.bit.GPIO17=1;
+//}

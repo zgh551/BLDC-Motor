@@ -47,101 +47,7 @@ void InitEPwm(void)
    //tbd...
 }
 
-void InitEPwmBLDC(void)
-{
-   // Initialize ePWM1/2/3/4/5/6
-    InitEPwmGpio();
 
-    //=====================================================================
-    // Config
-    // Initialization Time
-    //========================
-    // EPWM Module 1 config
-    EPwm1Regs.TBPRD = 450; // Period = 900 TBCLK counts
-    EPwm1Regs.TBPHS.half.TBPHS = 0; // Set Phase register to zero
-    EPwm1Regs.TBCTL.bit.CTRMODE = TB_COUNT_UPDOWN; // Symmetrical mode
-    EPwm1Regs.TBCTL.bit.PHSEN = TB_DISABLE; // Master module
-    EPwm1Regs.TBCTL.bit.PRDLD = TB_SHADOW;
-    EPwm1Regs.TBCTL.bit.SYNCOSEL = TB_CTR_ZERO; // Sync down-stream module
-    EPwm1Regs.CMPCTL.bit.SHDWAMODE = CC_SHADOW;
-    EPwm1Regs.CMPCTL.bit.SHDWBMODE = CC_SHADOW;
-    EPwm1Regs.CMPCTL.bit.LOADAMODE = CC_CTR_ZERO; // load on CTR=Zero
-    EPwm1Regs.CMPCTL.bit.LOADBMODE = CC_CTR_ZERO; // load on CTR=Zero
-    EPwm1Regs.AQCTLA.bit.CAU = AQ_SET; // set actions for EPWM1A
-    EPwm1Regs.AQCTLA.bit.CAD = AQ_CLEAR;
-    EPwm1Regs.AQCTLB.bit.CAU = AQ_CLEAR;
-    EPwm1Regs.AQCTLB.bit.CAD = AQ_SET; // set actions for EPWM1B
-    EPwm1Regs.DBCTL.bit.OUT_MODE = DB_FULL_ENABLE; // enable Dead-band module
-    EPwm1Regs.DBCTL.bit.POLSEL = DB_ACTV_HIC; // Active Hi complementary
-    EPwm1Regs.DBFED = 20; // FED = 20 TBCLKs
-    EPwm1Regs.DBRED = 20; // RED = 20 TBCLKs
-    // PC confiure
-    EPwm1Regs.PCCTL.bit.CHPEN   = CHP_ENABLE;
-    EPwm1Regs.PCCTL.bit.CHPDUTY = CHP1_8TH;
-    EPwm1Regs.PCCTL.bit.CHPFREQ = CHP_DIV1;
-    EPwm1Regs.PCCTL.bit.OSHTWTH = 7;
-
-    // EPWM Module 2 config
-    EPwm2Regs.TBPRD = 450; // Period = 900 TBCLK counts
-    EPwm2Regs.TBPHS.half.TBPHS = 300; // Phase = 300/900 * 360 = 120 deg
-    EPwm2Regs.TBCTL.bit.CTRMODE = TB_COUNT_UPDOWN; // Symmetrical mode
-    EPwm2Regs.TBCTL.bit.PHSEN = TB_ENABLE; // Slave module
-    EPwm2Regs.TBCTL.bit.PHSDIR = TB_DOWN; // Count DOWN on sync (=120 deg)
-    EPwm2Regs.TBCTL.bit.PRDLD = TB_SHADOW;
-    EPwm2Regs.TBCTL.bit.SYNCOSEL = TB_SYNC_IN; // sync flow-through
-    EPwm2Regs.CMPCTL.bit.SHDWAMODE = CC_SHADOW;
-    EPwm2Regs.CMPCTL.bit.SHDWBMODE = CC_SHADOW;
-    EPwm2Regs.CMPCTL.bit.LOADAMODE = CC_CTR_ZERO; // load on CTR=Zero
-    EPwm2Regs.CMPCTL.bit.LOADBMODE = CC_CTR_ZERO; // load on CTR=Zero
-    EPwm2Regs.AQCTLA.bit.CAU = AQ_SET; // set actions for EPWM2A
-    EPwm2Regs.AQCTLA.bit.CAD = AQ_CLEAR;
-    EPwm2Regs.AQCTLB.bit.CAU = AQ_CLEAR;
-    EPwm2Regs.AQCTLB.bit.CAD = AQ_SET; // set actions for EPWM2B
-    EPwm2Regs.DBCTL.bit.OUT_MODE = DB_FULL_ENABLE; // enable Dead-band module
-    EPwm2Regs.DBCTL.bit.POLSEL = DB_ACTV_HIC; // Active Hi Complementary
-    EPwm2Regs.DBFED = 20; // FED = 20 TBCLKs
-    EPwm2Regs.DBRED = 20; // RED = 20 TBCLKs
-    // PC confiure
-    EPwm2Regs.PCCTL.bit.CHPEN   = CHP_ENABLE;
-    EPwm2Regs.PCCTL.bit.CHPDUTY = CHP1_8TH;
-    EPwm2Regs.PCCTL.bit.CHPFREQ = CHP_DIV1;
-    EPwm2Regs.PCCTL.bit.OSHTWTH = 7;
-
-    // EPWM Module 3 config
-    EPwm3Regs.TBPRD = 450; // Period = 900 TBCLK counts
-    EPwm3Regs.TBPHS.half.TBPHS = 300; // Phase = 300/900 * 360 = 120 deg
-    EPwm3Regs.TBCTL.bit.CTRMODE = TB_COUNT_UPDOWN; // Symmetrical mode
-    EPwm3Regs.TBCTL.bit.PHSEN = TB_ENABLE; // Slave module
-    EPwm3Regs.TBCTL.bit.PHSDIR = TB_UP; // Count UP on sync (=240 deg)
-    EPwm3Regs.TBCTL.bit.PRDLD = TB_SHADOW;
-    EPwm3Regs.TBCTL.bit.SYNCOSEL = TB_SYNC_IN; // sync flow-through
-    EPwm3Regs.CMPCTL.bit.SHDWAMODE = CC_SHADOW;
-    EPwm3Regs.CMPCTL.bit.SHDWBMODE = CC_SHADOW;
-    EPwm3Regs.CMPCTL.bit.LOADAMODE = CC_CTR_ZERO; // load on CTR=Zero
-    EPwm3Regs.CMPCTL.bit.LOADBMODE = CC_CTR_ZERO; // load on CTR=Zero
-    EPwm3Regs.AQCTLA.bit.CAU = AQ_SET; // set actions for EPWM3A
-    EPwm3Regs.AQCTLA.bit.CAD = AQ_CLEAR; // clear actions for EPWM3A
-    EPwm3Regs.AQCTLB.bit.CAU = AQ_CLEAR; // clear actions for EPWM3B
-    EPwm3Regs.AQCTLB.bit.CAD = AQ_SET; // set actions for EPWM3B
-    EPwm3Regs.DBCTL.bit.OUT_MODE = DB_FULL_ENABLE; // enable Dead-band module
-    EPwm3Regs.DBCTL.bit.POLSEL = DB_ACTV_HIC; // Active Hi complementary
-    EPwm3Regs.DBFED = 20; // FED = 20 TBCLKs
-    EPwm3Regs.DBRED = 20; // RED = 20 TBCLKs
-    // PC confiure
-    EPwm3Regs.PCCTL.bit.CHPEN   = CHP_ENABLE; // enable the pwm chopping
-    EPwm3Regs.PCCTL.bit.CHPDUTY = CHP1_8TH;   // Chopping Clock Duty Cycle
-    EPwm3Regs.PCCTL.bit.CHPFREQ = CHP_DIV1;   // Chopping Clock Frequency
-    EPwm3Regs.PCCTL.bit.OSHTWTH = 7;          // One-Shot Pulse Width
-    // Run Time (Note: Example execution of one run-time instant)
-    //===========================================================
-    EPwm1Regs.CMPA.half.CMPA = 300; // adjust duty for output EPWM1A
-    EPwm2Regs.CMPA.half.CMPA = 300; // adjust duty for output EPWM2A
-    EPwm3Regs.CMPA.half.CMPA = 300; // adjust duty for output EPWM3A
-
-    EPwm1Regs.CMPB = 150; // adjust duty for output EPWM1B
-    EPwm2Regs.CMPB = 150; // adjust duty for output EPWM2B
-    EPwm3Regs.CMPB = 150; // adjust duty for output EPWM3B
-}
 //---------------------------------------------------------------------------
 // Example: InitEPwmGpio: 
 //---------------------------------------------------------------------------
@@ -154,9 +60,18 @@ void InitEPwmBLDC(void)
 
 void InitEPwmGpio(void)
 {
-   InitEPwm1Gpio();
-   InitEPwm2Gpio();
-   InitEPwm3Gpio();
+#if DSP28_EPWM1
+    InitEPwm1Gpio();
+#endif
+
+#if DSP28_EPWM2
+    InitEPwm2Gpio();
+#endif
+
+#if DSP28_EPWM3
+    InitEPwm3Gpio();
+#endif
+
 #if DSP28_EPWM4
    InitEPwm4Gpio();
 #endif // endif DSP28_EPWM4

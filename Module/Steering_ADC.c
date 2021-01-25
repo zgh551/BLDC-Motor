@@ -20,8 +20,8 @@
 #define ADC_SHCLK  0xf   // S/H width in ADC module periods                        = 16 ADC clocks
 #define AVG        1000  // Average sample limit
 #define ZOFFSET    0x00  // Average Zero offset
-#define BUF_SIZE   5    // Sample buffer size
-#define Sample_Fre 5000
+#define BUF_SIZE   4    // Sample buffer size
+#define Sample_Fre 1000
 
 //#define ADC_MaxValue	4095
 //#define ADC_MinValue	200
@@ -36,50 +36,66 @@
 //#pragma DATA_SECTION(DMABuf1,"DMARAML4");
 extern volatile Uint16 DMABuf1[BUF_SIZE];
 
+// Prototype statements for functions found within this file.
+__interrupt void adc_isr(void);
 
 volatile Uint16 *DMADest;
 volatile Uint16 *DMASource;
 
+
+
 void Steering_ADC_Init(void)
 {
-// InitPeripherals(); // Not required for this example
-   InitAdc();  // For this example, init the ADC
+
 // Specific clock setting for this example:
    EALLOW;
-   SysCtrlRegs.HISPCP.all = ADC_MODCLK;	// HSPCLK = SYSCLKOUT/ADC_MODCLK
+   SysCtrlRegs.HISPCP.all = ADC_MODCLK;	// HSPCLK = SYSCLKOUT / ADC_MODCLK
    EDIS;
 
+// Interrupts that are used in this example are re-mapped to
+// ISR functions found within this file.
+   EALLOW;  // This is needed to write to EALLOW protected register
+   PieVectTable.ADCINT = &adc_isr;
+   EDIS;    // This is needed to disable write to EALLOW protected registers
+
+// InitPeripherals(); // Not required for this example
+   InitAdc();  // For this example, init the ADC
+
 // Specific ADC setup for this example:
-   AdcRegs.ADCTRL1.bit.ACQ_PS         = ADC_SHCLK;// ������������
-   AdcRegs.ADCTRL3.bit.ADCCLKPS       = ADC_CKPS; // HCLKʱ�ӷ�Ƶ
-   AdcRegs.ADCTRL1.bit.SEQ_CASC       = 0;        // 0 Non-Cascaded Mode ������
+   AdcRegs.ADCTRL1.bit.ACQ_PS         = ADC_SHCLK;// 16 ADC clocks
+   AdcRegs.ADCTRL3.bit.ADCCLKPS       = ADC_CKPS; // HCLK 12.5Mhz
+   AdcRegs.ADCTRL1.bit.SEQ_CASC       = 0;        // 0 Non-Cascaded Mode
    AdcRegs.ADCTRL2.bit.INT_ENA_SEQ1   = 0x1;  // Interrupt request by INT_SEQ1 is enabled.
    AdcRegs.ADCTRL2.bit.RST_SEQ1       = 0x1;  // Immediately reset sequencer to state CONV00
-   AdcRegs.ADCTRL2.bit.EPWM_SOCA_SEQ1 = 0x1; // Enable SOCA from ePWM to start SEQ1
-   AdcRegs.ADCCHSELSEQ1.bit.CONV00    = 0x0;  // Setup ADCINA0 as 1st SEQ1 conv.
-   AdcRegs.ADCCHSELSEQ1.bit.CONV01    = 0x1;  // Setup ADCINA1 as 2nd SEQ1 conv.
+   AdcRegs.ADCTRL2.bit.EPWM_SOCA_SEQ1 = 0x1;  // Enable SOCA from ePWM to start SEQ1
 
-   AdcRegs.ADCCHSELSEQ2.bit.CONV04    = 0x0;  // Setup ADCINA4 as 1st SEQ2 conv.
-   AdcRegs.ADCCHSELSEQ2.bit.CONV05    = 0x1;  // Setup ADCINA5 as 2nd SEQ2 conv.
-   AdcRegs.ADCCHSELSEQ2.bit.CONV06    = 0x2;  // Setup ADCINA6 as 3td SEQ2 conv.
-   AdcRegs.ADCCHSELSEQ2.bit.CONV07    = 0x3;  // Setup ADCINA7 as 4fr SEQ2 conv.
+   AdcRegs.ADCCHSELSEQ1.bit.CONV00    = 0x7;  // Setup ADCINA7 as 1st SEQ1 conv.
+   AdcRegs.ADCCHSELSEQ1.bit.CONV01    = 0x6;  // Setup ADCINA6 as 2nd SEQ1 conv.
+   AdcRegs.ADCCHSELSEQ1.bit.CONV02    = 0x5;  // Setup ADCINA5 as 3td SEQ1 conv.
+   AdcRegs.ADCCHSELSEQ1.bit.CONV03    = 0x4;  // Setup ADCINA4 as 4fr SEQ1 conv.
 
-   AdcRegs.ADCMAXCONV.bit.MAX_CONV1   = 1;   // Set up ADC to perform 1 conversions for every SOC
+//   AdcRegs.ADCCHSELSEQ2.bit.CONV04    = 0x0;  // Setup ADCINA4 as 1st SEQ2 conv.
+//   AdcRegs.ADCCHSELSEQ2.bit.CONV05    = 0x1;  // Setup ADCINA5 as 2nd SEQ2 conv.
+//   AdcRegs.ADCCHSELSEQ2.bit.CONV06    = 0x2;  // Setup ADCINA6 as 3td SEQ2 conv.
+//   AdcRegs.ADCCHSELSEQ2.bit.CONV07    = 0x3;  // Setup ADCINA7 as 4fr SEQ2 conv.
 
+   AdcRegs.ADCMAXCONV.bit.MAX_CONV1   = 3;   // Set up ADC to perform 1 conversions for every SOC
+
+   AdcRegs.ADCREFSEL.bit.REF_SEL = 0 ; // Internal reference selected
 //   AdcRegs.ADCTRL1.bit.CONT_RUN = 0;       // Setup continuous run
 }
 
 void Steering_ADC_EPwm(void)
 {
 // Assumes ePWM1 clock is already enabled in InitSysCtrl();
-	EPwm2Regs.ETSEL.bit.SOCAEN  = 1;        				  // Enable SOC on A group
-	EPwm2Regs.ETSEL.bit.SOCASEL = ET_CTRU_CMPA;     		  // Select SOC from from CPMA on upcount
-	EPwm2Regs.ETPS.bit.SOCAPRD  = ET_1ST;        			  // Generate pulse on 1st event
-	EPwm2Regs.CMPA.half.CMPA    =  CPU_FRQ/Sample_Fre/4;	  	  // Set compare A value
-	EPwm2Regs.TBPRD             = (CPU_FRQ/Sample_Fre/2 - 1); // Set period for ePWM1; CPU_FRQ/2/5000 - 1;
-	EPwm2Regs.TBCTL.bit.CTRMODE   = TB_COUNT_UP;			  // count up and start
-	EPwm2Regs.TBCTL.bit.HSPCLKDIV = TB_DIV2;     			  // TBCLK = SYSCLK/2
-	EPwm2Regs.TBCTL.bit.CLKDIV    = TB_DIV1;
+	EPwm1Regs.ETSEL.bit.SOCAEN  = 1;        				  // Enable SOC on A group
+	EPwm1Regs.ETSEL.bit.SOCASEL = ET_CTR_PRD;     		      // Select SOC from from CTR_PRD on updown_count
+	EPwm1Regs.ETPS.bit.SOCAPRD  = ET_1ST;        			  // Generate pulse on 1st event
+//	EPwm1Regs.CMPA.half.CMPA    = 0x0080; // CPU_FRQ/Sample_Fre/4;	  	  // Set compare A value
+//	EPwm1Regs.TBPRD             = 0xffff; //(CPU_FRQ/Sample_Fre/2 - 1); // Set period for ePWM1; CPU_FRQ/2/5000 - 1;
+//	EPwm1Regs.TBCTL.bit.CTRMODE   = TB_COUNT_UP;			  // count up and start
+//	EPwm1Regs.TBCTL.bit.HSPCLKDIV = TB_DIV2;     			  // TBCLK = SYSCLK/2
+//	EPwm1Regs.TBCTL.bit.CLKDIV    = TB_DIV1;
 }
 
 void Steering_ADC_Start(void)
@@ -97,35 +113,21 @@ void Steerint_ADC_DMA_Init(void)
    DMADest   = &DMABuf1[0];              //Point DMA destination to the beginning of the array
    DMASource = &AdcMirror.ADCRESULT0;    //Point DMA source to ADC result register base
 
-   DMACH1AddrConfig(DMADest,DMASource);
+   DMACH1AddrConfig(DMADest, DMASource);
 
-// �������
-// Bsize��         ÿһ�����崫�ݵ��ֵĸ�����ʵ��������Ϊbsize+1
-// Srcbstep��ÿ����һ���ֺ�Դ��ַA����
-// Desbstep��ÿ����һ���ֺ�Ŀ�ĵ�ַA����
-   DMACH1BurstConfig(0,0,1);
+   // Bsize：         每一个脉冲传递的字的个数，实际脉冲数为bsize+1
+   // Srcbstep：每传递一个字后，源地址A增量
+   // Desbstep：每传递一个字后，目的地址A增量
+   DMACH1BurstConfig(0,1,1);
 
-// ֡����
-// Tsize��ÿһ֡���������������ݼ���0ʱ����һ֡������ɣ�Ҳ��DMA������ɣ�������DMA�жϡ�ʵ��֡��Ϊtsize+1
-// Srctstep��ÿ����������һ���ִ��ݽ�����Դ��ַA����
-// Deststep��ÿ����������һ���ִ��ݽ�����Ŀ�ĵ�ַA����
-   DMACH1TransferConfig(4,0,1);//֡���������¼��ص�ַ
+   // Tsize：每一帧的脉冲个数，脉冲递减到0时（即一帧传递完成，也是DMA传递完成），产生DMA中断。实际帧数为tsize+1
+   // Srctstep：每个脉冲的最后一个字传递结束后，源地址A增量
+   // Deststep：每个脉冲的最后一个字传递结束后，目的地址A增量
+   DMACH1TransferConfig(3,0,0); //帧结束后，重新加载地址ַ
 
-// ����ѭ��
-// Srcwsize�����Ѿ����ݵ�������Ϊsrcwsize+1��������ʱ��Դ��ַ��B������srcwstep����Ϊ0������װ����Դ��ַA
-// Deswsize�����Ѿ����ݵ�������Ϊdeswsize+1��������ʱ��Ŀ�ĵ�ַ��B������deswstep����Ϊ0������װ����Ŀ�ĵ�ַA
-   DMACH1WrapConfig(0xFFFF,0,0xFFFF,0);
+   // 每一帧后绕回，偏离0 all
+   DMACH1WrapConfig(3, 0, 3, 0);
 
-// ����ģʽ����
-// Persel��ѡ�񴥷�DMA�������ж�Դ
-// Perinte�������ж�ʹ�ܣ�
-// Oneshot��ʹ��ʱ���������һ���жϣ����ܹ���һ֡�����ꡣ��ֹ���������һ���жϣ�ֻ�ܴ���һ������
-// Cont��ʹ��ʱ��ÿ��DMA��������Ҫ�ٴ�����DMAʱ���Ͳ���Ҫ����void StartDMACH1(void)����ֹʱ������DMA����Ҫ����void StartDMACH1(void)
-// Datasize:����ÿ������16λ����32λ
-// Chintmode������DMA�ж�����DMA�������߽���ʱ����
-// Chinte��DMA��Ӧͨ�����ж�ʹ�ܣ����輶����
-// ע��Perinte��Chinteͬʱʹ��ʱ�����ܽ���DMAͨ���ж�
-// ��Perinteʹ�ܣ����Դ������ݣ����ǲ�����ͨ�����жϳ���
    DMACH1ModeConfig(DMA_SEQ1INT,PERINT_ENABLE,ONESHOT_ENABLE,CONT_ENABLE,SYNC_DISABLE,SYNC_SRC,
 		 OVRFLOW_DISABLE,SIXTEEN_BIT,CHINT_END,CHINT_ENABLE);
 
@@ -166,4 +168,47 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 		ADC_temp = ADC_value;
 	}
 	return (Uint16)((ADC_temp-Current_Min_Value)*0.25);
+}
+
+__interrupt void  adc_isr(void)
+{
+//    DMABuf1[0] = AdcMirror.ADCRESULT0;
+//    DMABuf1[1] = AdcMirror.ADCRESULT1;
+//    DMABuf1[2] = AdcMirror.ADCRESULT2;
+//    DMABuf1[3] = AdcMirror.ADCRESULT3;
+
+//    d2m_Messege.MotorDriver_IA = AdcMirror.ADCRESULT0;
+//    d2m_Messege.MotorDriver_IB = AdcMirror.ADCRESULT1;
+//    d2m_Messege.MotorDriver_IC = AdcMirror.ADCRESULT2;
+
+    // read the position and velocity information
+    d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
+//
+//    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,
+//                   &d2m_Messege.I_alpha, &d2m_Messege.I_beta);
+//
+//    ParkTransform(d2m_Messege.I_alpha, d2m_Messege.I_beta, d2m_Messege.AngularPosition,
+//                  &d2m_Messege.I_d, &d2m_Messege.I_q);
+//
+//    CurrentD_ControllerPID(0, d2m_Messege.I_d, &d2m_Messege.V_d);
+//    CurrentQ_ControllerPID(5, d2m_Messege.I_q, &d2m_Messege.V_q);
+
+    d2m_Messege.V_d = 0;
+    d2m_Messege.V_q = 5;
+
+    InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, d2m_Messege.AngularPosition,
+                         &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
+
+    d2m_Messege.ControlPhaseState = SVPWM(d2m_Messege.V_alpha, d2m_Messege.V_beta);
+
+    // update the voltage and current
+    d2m_Messege.MotorDriverVoltage = AdcMirror.ADCRESULT3 * 0.00732421875; // adc / 4096 * 3 * 10
+//    d2m_Messege.MotorDriverCurrent = DMABuf1[3] * 7.324e-8f;
+
+// Reinitialize for next ADC sequence
+    AdcRegs.ADCTRL2.bit.RST_SEQ1   = 1;         // Reset SEQ1
+    AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;   // Acknowledge interrupt to PIE
+
+    return;
 }
