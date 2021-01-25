@@ -44,6 +44,7 @@ Uint16 dat_cnt = 0;
 Master2DriverMessege m2d_Messege;
 Driver2MasterMessege d2m_Messege;
 Uint16 TelemetrySendFlag;
+Uint16 Time5msSendFlag;
 
 void StateMachine_Init(void)
 {
@@ -221,6 +222,35 @@ void BLDC_TelemetrySend(void)
 		Steering_Send_Byte_B(Tdata.data[i]);
 	}
 	Steering_Send_Byte_B(check_sum & 0x00ff);
+}
+
+void BLDC_TreePhaseCurrent(void)
+{
+    Uint16 i = 0, check_sum = 0;
+    Uint16 temp_data = 0;
+    Tdata.len = 8;
+    Tdata.data[0] = TREE_PHASE_CURRENT;
+    temp_data = (Uint16)(d2m_Messege.MotorDriver_IA * 1000); // A相电流
+    Tdata.data[1] =  temp_data & 0x00ff;
+    Tdata.data[2] = (temp_data >> 8) & 0x00ff;
+    temp_data = (Uint16)(d2m_Messege.MotorDriver_IB * 1000); // B相电流
+    Tdata.data[3] =  temp_data & 0x00ff;
+    Tdata.data[4] = (temp_data >> 8) & 0x00ff;
+    temp_data = (Uint16)(d2m_Messege.MotorDriver_IC * 1000); // C相电流
+    Tdata.data[5] =  temp_data & 0x00ff;
+    Tdata.data[6] = (temp_data >> 8) & 0x00ff;
+    Tdata.data[7] = 0;
+
+    Steering_Send_Byte_B(0x55);
+    Steering_Send_Byte_B(0x77);
+    Steering_Send_Byte_B(Tdata.len);
+    check_sum = 0;
+    for (i = 0; i < Tdata.len; i++)
+    {
+        check_sum += Tdata.data[i];
+        Steering_Send_Byte_B(Tdata.data[i]);
+    }
+    Steering_Send_Byte_B(check_sum & 0x00ff);
 }
 
 void CommunicationStateMachine(Uint16 Receive_Data)

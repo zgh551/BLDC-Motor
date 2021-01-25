@@ -177,9 +177,9 @@ __interrupt void  adc_isr(void)
 //    DMABuf1[2] = AdcMirror.ADCRESULT2;
 //    DMABuf1[3] = AdcMirror.ADCRESULT3;
 
-//    d2m_Messege.MotorDriver_IA = AdcMirror.ADCRESULT0;
-//    d2m_Messege.MotorDriver_IB = AdcMirror.ADCRESULT1;
-//    d2m_Messege.MotorDriver_IC = AdcMirror.ADCRESULT2;
+    d2m_Messege.MotorDriver_IA = AdcMirror.ADCRESULT0 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IB = AdcMirror.ADCRESULT1 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IC = AdcMirror.ADCRESULT2 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
 
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);

@@ -344,24 +344,16 @@ interrupt void  ADCINT_ISR(void)     // ADC
 interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 {
     // Insert ISR Code here
-    cnt = (cnt + 1) % 64;
-
-    cnt_500ms = (cnt_500ms + 1) % 100;
+    cnt_500ms = (cnt_500ms + 1) % 10;
     if(0 == cnt_500ms)
     {
         TelemetrySendFlag = 0xAABB;
-    }
-
-//    InverseParkTransform(5, 0, 0, &v_alpha, &v_beta);
-//
-//    SVPWM(v_alpha, v_beta);
-
-    if(cnt == 0)
-    {
         LedRunning();
     }
-    //   Target_Position = 500*sin(2*3.14*cnt/1000)+500;
-    //   Self_Check_State_Machine(&Target_Position,FW);
+    else if(1 == cnt_500ms)
+    {
+        Time5msSendFlag = 0xABCD;
+    }
 // To receive more interrupts from this PIE group, acknowledge this interrupt
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }

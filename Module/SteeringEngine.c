@@ -46,8 +46,6 @@ void InitEPwmBLDC(void)
     EPwm1Regs.CMPCTL.bit.LOADBMODE  = CC_CTR_ZERO;      // load on CTR=Zero
     EPwm1Regs.AQCTLA.bit.CAU        = AQ_SET;           // set actions for EPWM1A
     EPwm1Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM1A
-//    EPwm1Regs.AQCTLB.bit.CAU        = AQ_CLEAR;         // clear actions for EPWM1B
-//    EPwm1Regs.AQCTLB.bit.CAD        = AQ_SET;           // set actions for EPWM1B
     EPwm1Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm1Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi complementary
     EPwm1Regs.DBFED                 = 50;               // FED = 50 TBCLKs
@@ -60,7 +58,6 @@ void InitEPwmBLDC(void)
     EPwm2Regs.TBCTL.bit.CLKDIV      = TB_DIV1;
     EPwm2Regs.TBCTL.bit.CTRMODE     = TB_COUNT_UPDOWN;  // Symmetrical mode
     EPwm2Regs.TBCTL.bit.PHSEN       = TB_ENABLE;        // Slave module
-//    EPwm2Regs.TBCTL.bit.PHSDIR = TB_DOWN; // Count DOWN on sync (=120 deg)
     EPwm2Regs.TBCTL.bit.PRDLD       = TB_SHADOW;
     EPwm2Regs.TBCTL.bit.SYNCOSEL    = TB_SYNC_IN;       // sync flow-through
     EPwm2Regs.CMPCTL.bit.SHDWAMODE  = CC_SHADOW;
@@ -69,8 +66,6 @@ void InitEPwmBLDC(void)
     EPwm2Regs.CMPCTL.bit.LOADBMODE  = CC_CTR_ZERO;      // load on CTR=Zero
     EPwm2Regs.AQCTLA.bit.CAU        = AQ_SET;           // set actions for EPWM2A
     EPwm2Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM2A
-//    EPwm2Regs.AQCTLB.bit.CAU        = AQ_CLEAR;         // clear actions for EPWM2B
-//    EPwm2Regs.AQCTLB.bit.CAD        = AQ_SET;           // set actions for EPWM2B
     EPwm2Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm2Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi Complementary
     EPwm2Regs.DBFED                 = 50;               // FED = 50 TBCLKs
@@ -83,7 +78,6 @@ void InitEPwmBLDC(void)
     EPwm3Regs.TBCTL.bit.CLKDIV      = TB_DIV1;
     EPwm3Regs.TBCTL.bit.CTRMODE     = TB_COUNT_UPDOWN;  // Symmetrical mode
     EPwm3Regs.TBCTL.bit.PHSEN       = TB_ENABLE;        // Slave module
-//    EPwm3Regs.TBCTL.bit.PHSDIR = TB_UP; // Count UP on sync (=240 deg)
     EPwm3Regs.TBCTL.bit.PRDLD       = TB_SHADOW;
     EPwm3Regs.TBCTL.bit.SYNCOSEL    = TB_SYNC_IN;       // sync flow-through
     EPwm3Regs.CMPCTL.bit.SHDWAMODE  = CC_SHADOW;
@@ -92,8 +86,6 @@ void InitEPwmBLDC(void)
     EPwm3Regs.CMPCTL.bit.LOADBMODE  = CC_CTR_ZERO;      // load on CTR=Zero
     EPwm3Regs.AQCTLA.bit.CAU        = AQ_SET;           // set actions for EPWM3A
     EPwm3Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM3A
-//    EPwm3Regs.AQCTLB.bit.CAU        = AQ_CLEAR;         // clear actions for EPWM3B
-//    EPwm3Regs.AQCTLB.bit.CAD        = AQ_SET;           // set actions for EPWM3B
     EPwm3Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm3Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi complementary
     EPwm3Regs.DBFED                 = 50;               // FED = 50 TBCLKs
@@ -101,17 +93,9 @@ void InitEPwmBLDC(void)
 
     // Run Time (Note: Example execution of one run-time instant)
     //===========================================================
-//    EPwm1Regs.CMPA.half.CMPA        = 500;              // adjust duty for output EPWM1A
-//    EPwm2Regs.CMPA.half.CMPA        = PWM_COUNT - 10;   // adjust duty for output EPWM2A
-//    EPwm3Regs.CMPA.half.CMPA        = PWM_COUNT - 10;   // adjust duty for output EPWM3A
-
     EPwm1Regs.CMPA.half.CMPA        = PWM_COUNT;        // adjust duty for output EPWM1A
     EPwm2Regs.CMPA.half.CMPA        = PWM_COUNT;        // adjust duty for output EPWM2A
     EPwm3Regs.CMPA.half.CMPA        = PWM_COUNT;        // adjust duty for output EPWM3A
-
-//    EPwm1Regs.CMPB = 150; // adjust duty for output EPWM1B
-//    EPwm2Regs.CMPB = 150; // adjust duty for output EPWM2B
-//    EPwm3Regs.CMPB = 150; // adjust duty for output EPWM3B
 }
 
 void BLDC_ShutDown(Uint16 state)

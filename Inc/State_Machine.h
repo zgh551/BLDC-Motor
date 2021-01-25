@@ -30,7 +30,9 @@
 #define RESET_REACT     		(0x83) // 复位应答
 #define APROXMT_ZERO_REACT 		(0x84) // 近似零位应答
 #define DRIVER_BOARD_CYCLE_SEND (0x85) // 驱动板周期发送
-#define TELEMETRY_SEND 			(0x85) // 遥测数据发送
+#define TELEMETRY_SEND 			(0x86) // 遥测数据发送
+// user define commond
+#define TREE_PHASE_CURRENT      (0x91) // 三相电流发送
 
 typedef struct _Master2DriverMessege
 {
@@ -94,7 +96,7 @@ extern Master2DriverMessege m2d_Messege;
 extern Driver2MasterMessege d2m_Messege;
 
 extern Uint16 TelemetrySendFlag;
-
+extern Uint16 Time5msSendFlag;
 /**
  * @brief the state machine initialize
  */
@@ -126,6 +128,11 @@ void BLDC_CycleSend500ms(void);
  * @brief the Telemetry send
  */
 void BLDC_TelemetrySend(void);
+
+/*
+ * @brief the tree phase current send
+ */
+void BLDC_TreePhaseCurrent(void);
 
 /**
  * @brief the 422 communication receive function
