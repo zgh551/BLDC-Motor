@@ -8,6 +8,8 @@
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
 #include "FOC.h"
 
+#pragma CODE_SECTION(SVPWM, "ramfuncs");
+
 #define INVER_SQRT_TREE (0.57735026918962576450914878050196) // 1/sqrt(3)
 #define TWO_SQRT_TREE   (0.86602540378443864676372317075294) // sqrt(3)/2
 #define SQRT_TREE       (1.7320508075688772935274463415059)  // sqrt(3)
@@ -16,6 +18,52 @@
 #define V_DC            (0.03571428571428571428571428571429) // 1 / U_dc = 1 / 28 (V)
 
 #define K_SVPWM         (SQRT_TREE * T_SAMPLE * V_DC)        // sqrt(3) * T_s / U_dc
+
+void CurrentProcess(float *ia, float *ib, float *ic, Uint16 step)
+{
+    switch(step)
+    {
+    case 1:
+        // a > 0
+        *ic = *ib - *ia;
+        *ib = -*ib;
+        break;
+
+    case 2:
+        // b > 0
+        *ic = *ia - *ib;
+        *ia = -*ia;
+        break;
+
+    case 3:
+        // b > 0
+        *ia = *ic - *ib;
+        *ic = -*ic;
+        break;
+
+    case 4:
+        // c > 0
+        *ia = *ib - *ic;
+        *ib = -*ib;
+        break;
+
+    case 5:
+        // c > 0
+        *ib = *ia - *ic;
+        *ia = -*ia;
+        break;
+
+    case 6:
+        // a > 0
+        *ib = *ic - *ia;
+        *ic = -*ic;
+        break;
+
+    default:
+
+        break;
+    }
+}
 
 void ClarkTransform(float ia, float ib, float ic, float* i_alpha, float* i_beta)
 {

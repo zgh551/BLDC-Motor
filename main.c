@@ -6,12 +6,7 @@ extern Uint16 RamfuncsLoadEnd;
 extern Uint16 RamfuncsRunStart;
 extern Uint16 RamfuncsLoadSize;
 
-//static Uint32 ARINC_Dat_H,ARINC_Dat_L;
-//static Uint32 ARINC_Data;
-static Uint16 Position = 0, Velocity = 0, Fault = 0;
-static float result_position = 0.0, result_velocity = 0.0;
-
-static Uint16 Temp_Dos = 0, Temp_Lot = 0, Temp_Dir = 0;
+float test1 = 0, test2;
 
 int main(void) {
     // Step 1. Initialize System Control:
@@ -75,7 +70,7 @@ int main(void) {
     //-Init the ePWM
     BLDC_IO_Init();
     InitEPwmBLDC();
-    BLDC_ShutDown(1);
+    Control_Init();
 
     //-SCI Module Initialize for 422
     Steering_SCIB_Init();

@@ -24,7 +24,13 @@
 #define CURRENT_UPDATE_FREQ   10000
 #define CURRENT_UPDATE_DT     (float)(1.0f / CURRENT_UPDATE_FREQ)
 
-PidObject PID_Current_D, PID_Current_Q;
+#pragma CODE_SECTION(CurrentD_ControllerPID, "ramfuncs");
+#pragma CODE_SECTION(CurrentQ_ControllerPID, "ramfuncs");
+
+#pragma DATA_SECTION(PID_Current_D, "DMARAML4");
+#pragma DATA_SECTION(PID_Current_Q, "DMARAML4");
+
+PidObject PID_Current_Q, PID_Current_D;
 
 void Control_Init(void)
 {

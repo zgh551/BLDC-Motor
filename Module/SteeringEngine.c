@@ -22,6 +22,11 @@ void BLDC_IO_Init(void)
     EDIS;
 }
 
+void BLDC_ShutDown(Uint16 state)
+{
+    GpioDataRegs.GPADAT.bit.GPIO17 = state;
+}
+
 void InitEPwmBLDC(void)
 {
    // Initialize ePWM1/2/3/4/5/6 GPIO
@@ -96,11 +101,8 @@ void InitEPwmBLDC(void)
     EPwm1Regs.CMPA.half.CMPA        = PWM_COUNT;        // adjust duty for output EPWM1A
     EPwm2Regs.CMPA.half.CMPA        = PWM_COUNT;        // adjust duty for output EPWM2A
     EPwm3Regs.CMPA.half.CMPA        = PWM_COUNT;        // adjust duty for output EPWM3A
-}
 
-void BLDC_ShutDown(Uint16 state)
-{
-    GpioDataRegs.GPADAT.bit.GPIO17 = state;
+    BLDC_ShutDown(0);// stop
 }
 
 void ePWM1_LowLevelDutyTime(float time) // us
@@ -116,6 +118,17 @@ void ePWM2_LowLevelDutyTime(float time) // us
 void ePWM3_LowLevelDutyTime(float time) // us
 {
     EPwm3Regs.CMPA.half.CMPA = (Uint16)(time * 75); // adjust duty for output EPWM1A
+}
+
+
+void BLDC_Start()
+{
+    BLDC_ShutDown(1);
+}
+
+void BLDC_Stop()
+{
+    BLDC_ShutDown(0);
 }
 
 //int16 limitPosition(int16 value)

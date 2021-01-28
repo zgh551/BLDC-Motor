@@ -110,12 +110,12 @@ void AD2S1210_Init(void)
     AD2S1210_SampleUpdate();
 
     // set the resolution in the pin of chip
-    AD2S1210_Res0(0);
+    AD2S1210_Res0(1);
     AD2S1210_Res1(1);
     // register set
     // res: 12bit
     // enres: 16bit
-    AD2S1210_ConfigModeWrite(CONTROL, 0x7E);
+    AD2S1210_ConfigModeWrite(CONTROL, 0x7F);
 
     // configure the EXCITATION FREQUENCY register
     AD2S1210_ConfigModeWrite(EXCITATION_FREQUENCY, 0x18); // 6khz
@@ -175,12 +175,14 @@ Uint16 AD2S1210_ResultRead(float* pos, float* vel)
     AD2S1210_SampleUpdate();
 
     temp_data_u16 = *(Uint16*)(0x200000);
-    *pos  = (temp_data_u16 >> 4) * 0.08833 * DEG2RAD; // 5.3 / 60 [deg: 0 - 360]
+//    *pos  = (temp_data_u16 >> 4) * 0.08833 * DEG2RAD; // 5.3 / 60 [deg: 0 - 360] 10bit
+    *pos  = temp_data_u16 * 0.005 * DEG2RAD; // 0.3 / 60 [deg: 0 - 360] 16bit
 
     DELAY_US(WR_DELAY_TIME);
 
     temp_data_i16 = *(int16*)(0x200002);
-    *vel  = (temp_data_i16 >> 4) * 0.488; //rps
+//    *vel  = (temp_data_i16 >> 4) * 0.488; //rps 10bit
+    *vel  = temp_data_i16 * 0.004; //rps 16bit
 
     DELAY_US(WR_DELAY_TIME);
 

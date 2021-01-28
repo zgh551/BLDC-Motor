@@ -22,8 +22,8 @@ void ePWM2_LowLevelDutyTime(float time); // us
 
 void ePWM3_LowLevelDutyTime(float time); // us
 
-//int16 limitPosition(int16 value);
-//
-//void SteeringPowerOutput(int16 PositionPIDOutput);
+void BLDC_Start();
+
+void BLDC_Stop();
 
 #endif /* STEERINGENGINE_28335_V3_INC_STEERINGENGINE_H_ */

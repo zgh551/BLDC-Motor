@@ -1,7 +1,7 @@
 /*
  * PID.c
  *
- *  Created on: 2016Äê3ÔÂ1ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½1ï¿½ï¿½
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -18,7 +18,7 @@ void pidInit(PidObject* pid, const float desired, const float kp,
   pid->kp = kp;
   pid->ki = ki;
   pid->kd = kd;
-  pid->iLimit    = DEFAULT_PID_INTEGRATION_LIMIT;
+  pid->iLimit    =  DEFAULT_PID_INTEGRATION_LIMIT;
   pid->iLimitLow = -DEFAULT_PID_INTEGRATION_LIMIT;
   pid->dt        = dt;
 }
@@ -29,7 +29,7 @@ float pidUpdate(PidObject* pid, const float measured, const unsigned char update
 
     if (updateError)
     {
-        pid->error = pid->desired - measured;//Ô¤ÆÚ - Êµ¼Ê
+        pid->error = pid->desired - measured;//Ô¤ï¿½ï¿½ - Êµï¿½ï¿½
     }
 
     pid->integ += pid->error * pid->dt;
@@ -55,17 +55,17 @@ float pidUpdate(PidObject* pid, const float measured, const unsigned char update
     return output;
 }
 
-//ÉèÖÃ»ý·Ö¼«ÏÞ
+//ï¿½ï¿½ï¿½Ã»ï¿½ï¿½Ö¼ï¿½ï¿½ï¿½
 void pidSetIntegralLimit(PidObject* pid, const float limit) {
     pid->iLimit = limit;
 }
 
-//ÉèÖÃ»ý·Ö×îµÍÖµ
+//ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµ
 void pidSetIntegralLimitLow(PidObject* pid, const float limitLow) {
     pid->iLimitLow = limitLow;
 }
 
-//pid²ÎÊý³õÊ¼»¯
+//pidï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 void pidReset(PidObject* pid)
 {
   pid->error     = 0;
@@ -74,25 +74,25 @@ void pidReset(PidObject* pid)
   pid->deriv     = 0;
 }
 
-//ÉèÖÃPIDÎó²î
+//ï¿½ï¿½ï¿½ï¿½PIDï¿½ï¿½ï¿½
 void pidSetError(PidObject* pid, const float error)
 {
   pid->error = error;
 }
 
-//ÉèÖÃÄ¿±êPIDÖµ
+//ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½PIDÖµ
 void pidSetDesired(PidObject* pid, const float desired)
 {
   pid->desired = desired;
 }
 
-//»ñÈ¡Ä¿±êPIDÖµ
+//ï¿½ï¿½È¡Ä¿ï¿½ï¿½PIDÖµ
 float pidGetDesired(PidObject* pid)
 {
   return pid->desired;
 }
 
-//ÅÐ¶ÏPIDÊÇ·ñ¼¤»î
+//ï¿½Ð¶ï¿½PIDï¿½Ç·ñ¼¤»ï¿½
 unsigned char pidIsActive(PidObject* pid)
 {
 	unsigned char isActive = 1;

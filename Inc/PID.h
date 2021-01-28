@@ -5,8 +5,8 @@
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V3_INC_PID_H_
-#define STEERINGENGINE_28335_V3_INC_PID_H_
+#ifndef _INC_PID_H_
+#define _INC_PID_H_
 
 #include "include.h"
 
@@ -21,14 +21,14 @@
 #define PID_CURRENT_KD  0.12 //0.12
 #define PID_CURRENT_INTEGRATION_LIMIT    100.0
 
-#define PID_CURRENT_D_KP  3.5 //3.5
-#define PID_CURRENT_D_KI  0.0
-#define PID_CURRENT_D_KD  0.12 //0.12
+#define PID_CURRENT_D_KP  1.0 //3.5
+#define PID_CURRENT_D_KI  0.1
+#define PID_CURRENT_D_KD  0.0 //0.12
 #define PID_CURRENT_D_INTEGRATION_LIMIT    100.0
 
-#define PID_CURRENT_Q_KP  3.5 //3.5
-#define PID_CURRENT_Q_KI  0.0
-#define PID_CURRENT_Q_KD  0.12 //0.12
+#define PID_CURRENT_Q_KP  1.0 //3.5
+#define PID_CURRENT_Q_KI  0.1
+#define PID_CURRENT_Q_KD  0.0 //0.12
 #define PID_CURRENT_Q_INTEGRATION_LIMIT    100.0
 
 #define DEFAULT_PID_INTEGRATION_LIMIT  	 5000.0

@@ -7,6 +7,9 @@
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
 #include "State_Machine.h"
 
+#pragma DATA_SECTION(Rdata, "DMARAML5");
+#pragma DATA_SECTION(Tdata, "DMARAML5");
+
 #define ARINC429_Send   10
 
 #define FirstCheckChar  0x55
@@ -22,6 +25,14 @@ ReceiveData,
 CheckSum
 } CommunicationState;
 CommunicationState Com422_State = HeadFirst;
+
+typedef enum {
+WaitStart = 0,
+Running,
+WaitStop
+} RotateControlState;
+RotateControlState BLDC_RotateState = WaitStart;
+Uint16 rotate_turn_cnt = 0, last_phase = 0;
 
 //422 Communication
 typedef struct _RxData{
@@ -168,7 +179,7 @@ void BLDC_CycleSend500ms(void)
 {
 	Uint16 i = 0, check_sum = 0;
 	Uint16 temp_data = 0;
-//	int16 temp_data_i16 = 0;
+	int16 temp_data_i16 = 0;
 	Tdata.len = 8;
 	Tdata.data[0] = DRIVER_BOARD_CYCLE_SEND;
 	Tdata.data[1] = d2m_Messege.MotorDriverVoltage * 5 ; // 电机驱动电压
@@ -177,11 +188,17 @@ void BLDC_CycleSend500ms(void)
 	Tdata.data[3] =  temp_data & 0x00ff; 
 	Tdata.data[4] = (temp_data >> 8) & 0x00ff; 
 
-	temp_data =  d2m_Messege.AngularVelocity < 0.0
-	          ? -d2m_Messege.AngularVelocity * 100
-	          :  d2m_Messege.AngularVelocity * 100; // 电机角速度
-	Tdata.data[5] =  temp_data & 0x00ff;
-	Tdata.data[6] = (temp_data >> 8) & 0x00ff; // [0 - 54000] deg
+	temp_data_i16 = d2m_Messege.AngularVelocity * 10;
+	Tdata.data[5] =  temp_data_i16 & 0x00ff;
+	Tdata.data[6] = (temp_data_i16 >> 8) & 0x00ff; // [-1000 - 1000] deg
+
+//	temp_data =  d2m_Messege.AngularVelocity < 0.0
+//	          ? -d2m_Messege.AngularVelocity * 100
+//	          :  d2m_Messege.AngularVelocity * 100; // 电机角速度
+//	Tdata.data[5] =  temp_data & 0x00ff;
+//	Tdata.data[6] = (temp_data >> 8) & 0x00ff; // [0 - 54000] deg
+
+
 	Tdata.data[7] = d2m_Messege.MotorStatus; // 电机状态参数
 
 	Steering_Send_Byte_B(0x55);
@@ -239,7 +256,7 @@ void BLDC_TreePhaseCurrent(void)
     temp_data = (Uint16)(d2m_Messege.MotorDriver_IC * 1000); // C相电流
     Tdata.data[5] =  temp_data & 0x00ff;
     Tdata.data[6] = (temp_data >> 8) & 0x00ff;
-    Tdata.data[7] = 0;
+    Tdata.data[7] = d2m_Messege.FaultState & 0x00ff;
 
     Steering_Send_Byte_B(0x55);
     Steering_Send_Byte_B(0x77);
@@ -275,23 +292,21 @@ void CommunicationStateMachine(Uint16 Receive_Data)
 		break;
 
 		case Commond:
-			dat_cnt         = 0;
+			dat_cnt         = 1;
+			Rdata.data[0] = Receive_Data;
 			Rdata.cmd       = Receive_Data;
 			Rdata.checksum += Receive_Data;
 			Com422_State    = ReceiveData;
 		break;
 
 		case ReceiveData:
-			if(dat_cnt >= Rdata.len)
-			{
-				Com422_State = CheckSum;
-			}
-			else
-			{
-				Rdata.data[dat_cnt] = Receive_Data;
-				Rdata.checksum     += Receive_Data;
-				dat_cnt++;
-			}
+            Rdata.data[dat_cnt] = Receive_Data;
+            Rdata.checksum     += Receive_Data;
+            dat_cnt++;
+            if(dat_cnt >= Rdata.len)
+            {
+                Com422_State = CheckSum;
+            }
 		break;
 
 		case CheckSum:
@@ -300,30 +315,36 @@ void CommunicationStateMachine(Uint16 Receive_Data)
 			{
 				if(SELFCHECK == Rdata.cmd) // self check
 				{
-					m2d_Messege.Commond = SELFCHECK;
+					m2d_Messege.Commond = Rdata.data[0];
 				}
 				else if(DELIVERRY == Rdata.cmd) // 投放
 				{
-					m2d_Messege.Commond = DELIVERRY;
-					m2d_Messege.DeliveryStrategyNumber = Rdata.data[0]; // 投放策略编号
-					m2d_Messege.MotorRotateCount       = Rdata.data[1]; // 电机旋转次数
+					m2d_Messege.Commond = Rdata.data[0];
+					m2d_Messege.DeliveryStrategyNumber = Rdata.data[1]; // 投放策略编号
+					m2d_Messege.MotorRotateCount       = Rdata.data[2]; // 电机旋转次数
 					for (i = 0; i < m2d_Messege.MotorRotateCount; i++)
 					{
-						m2d_Messege.RotateTurns[i]  = Rdata.data[2 + 3 * i]; // 旋转圈数
-						m2d_Messege.RotateTimes[i]  = Rdata.data[3 + 3 * i]; // 旋转总运行时间
-						m2d_Messege.TimeInterval[i] = Rdata.data[4 + 3 * i]; // 两次的时间间隔
+						m2d_Messege.RotateTurns[i]  = Rdata.data[3 + 3 * i]; // 旋转圈数
+						m2d_Messege.RotateTimes[i]  = Rdata.data[4 + 3 * i]; // 旋转总运行时间
+						m2d_Messege.TimeInterval[i] = Rdata.data[5 + 3 * i]; // 两次的时间间隔
 					}
 				}
 				else if(RESET == Rdata.cmd) //Reset
 				{
-					m2d_Messege.Commond = RESET;
-					m2d_Messege.HighSpeedReverseNumber = Rdata.data[0]; // 高速反转圈数
-					m2d_Messege.LowSpeedReverseNumber  = Rdata.data[1]; // 低速反转圈数
+					m2d_Messege.Commond = Rdata.data[0];
+					m2d_Messege.HighSpeedReverseNumber = Rdata.data[1]; // 高速反转圈数
+					m2d_Messege.LowSpeedReverseNumber  = Rdata.data[2]; // 低速反转圈数
 				}
 				else if(APROXMT_ZERO == Rdata.cmd) //近似零位
 				{
-					m2d_Messege.Commond = APROXMT_ZERO;
+					m2d_Messege.Commond = Rdata.data[0];
 				}
+                else if(TARGET_DQ == Rdata.cmd) //目标DQ值
+                {
+                    m2d_Messege.Commond = Rdata.data[0];
+                    m2d_Messege.TargetVd = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.001f; //(int16)(Rdata.data[2] << 8) | Rdata.data[1]
+                    m2d_Messege.TargetVq = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.001f; //
+                }
 				else
 				{
 					// invalid commond
@@ -340,4 +361,48 @@ void CommunicationStateMachine(Uint16 Receive_Data)
 			Com422_State = HeadFirst;
 		break;
 	}
+}
+
+void BLDC_RotateTurnControl(Uint16 phase)
+{
+    switch(BLDC_RotateState)
+    {
+        case WaitStart:
+            if (m2d_Messege.Commond == DELIVERRY)
+            {
+                BLDC_Start();
+                rotate_turn_cnt = 0;
+                m2d_Messege.Commond = 0;
+                BLDC_RotateState = Running;
+            }
+            else
+            {
+                BLDC_Stop();
+            }
+            break;
+
+        case Running:
+            if (rotate_turn_cnt >= m2d_Messege.RotateTurns[0] )
+            {
+                BLDC_RotateState = WaitStop;
+            }
+            else
+            {
+                if((last_phase != phase) && (phase == 1))
+                {
+                    rotate_turn_cnt++;
+                }
+            }
+            break;
+
+        case WaitStop:
+            BLDC_Stop();
+            BLDC_RotateState = WaitStart;
+            break;
+
+        default:
+
+            break;
+    }
+    last_phase = phase;
 }

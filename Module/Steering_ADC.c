@@ -17,7 +17,7 @@
   #define ADC_MODCLK 0x2 // HSPCLK = SYSCLKOUT/2*ADC_MODCLK2 = 100/(2*2)   = 25.0 MHz
 #endif
 #define ADC_CKPS   0x1   // ADC module clock = HSPCLK/2*ADC_CKPS   = 25.0MHz/(1*2) = 12.5MHz
-#define ADC_SHCLK  0xf   // S/H width in ADC module periods                        = 16 ADC clocks
+#define ADC_SHCLK  0xF   // S/H width in ADC module periods                        = 16 ADC clocks
 #define AVG        1000  // Average sample limit
 #define ZOFFSET    0x00  // Average Zero offset
 #define BUF_SIZE   4    // Sample buffer size
@@ -74,15 +74,10 @@ void Steering_ADC_Init(void)
    AdcRegs.ADCCHSELSEQ1.bit.CONV02    = 0x5;  // Setup ADCINA5 as 3td SEQ1 conv.
    AdcRegs.ADCCHSELSEQ1.bit.CONV03    = 0x4;  // Setup ADCINA4 as 4fr SEQ1 conv.
 
-//   AdcRegs.ADCCHSELSEQ2.bit.CONV04    = 0x0;  // Setup ADCINA4 as 1st SEQ2 conv.
-//   AdcRegs.ADCCHSELSEQ2.bit.CONV05    = 0x1;  // Setup ADCINA5 as 2nd SEQ2 conv.
-//   AdcRegs.ADCCHSELSEQ2.bit.CONV06    = 0x2;  // Setup ADCINA6 as 3td SEQ2 conv.
-//   AdcRegs.ADCCHSELSEQ2.bit.CONV07    = 0x3;  // Setup ADCINA7 as 4fr SEQ2 conv.
+   AdcRegs.ADCMAXCONV.bit.MAX_CONV1   = 3;      // Set up ADC to perform 1 conversions for every SOC
 
-   AdcRegs.ADCMAXCONV.bit.MAX_CONV1   = 3;   // Set up ADC to perform 1 conversions for every SOC
-
-   AdcRegs.ADCREFSEL.bit.REF_SEL = 0 ; // Internal reference selected
-//   AdcRegs.ADCTRL1.bit.CONT_RUN = 0;       // Setup continuous run
+   AdcRegs.ADCREFSEL.bit.REF_SEL = 0 ;          // Internal reference selected
+//   AdcRegs.ADCTRL1.bit.CONT_RUN = 0;          // Setup continuous run
 }
 
 void Steering_ADC_EPwm(void)
@@ -172,17 +167,16 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 
 __interrupt void  adc_isr(void)
 {
-//    DMABuf1[0] = AdcMirror.ADCRESULT0;
-//    DMABuf1[1] = AdcMirror.ADCRESULT1;
-//    DMABuf1[2] = AdcMirror.ADCRESULT2;
-//    DMABuf1[3] = AdcMirror.ADCRESULT3;
-
     d2m_Messege.MotorDriver_IA = AdcMirror.ADCRESULT0 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
     d2m_Messege.MotorDriver_IB = AdcMirror.ADCRESULT1 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
     d2m_Messege.MotorDriver_IC = AdcMirror.ADCRESULT2 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    // update the voltage and current
+    d2m_Messege.MotorDriverVoltage = AdcMirror.ADCRESULT3 * 0.00732421875; // adc / 4096 * 3 * 10
 
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
+
+//    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
 //
 //    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,
 //                   &d2m_Messege.I_alpha, &d2m_Messege.I_beta);
@@ -191,19 +185,18 @@ __interrupt void  adc_isr(void)
 //                  &d2m_Messege.I_d, &d2m_Messege.I_q);
 //
 //    CurrentD_ControllerPID(0, d2m_Messege.I_d, &d2m_Messege.V_d);
-//    CurrentQ_ControllerPID(5, d2m_Messege.I_q, &d2m_Messege.V_q);
+//    CurrentQ_ControllerPID(3, d2m_Messege.I_q, &d2m_Messege.V_q);
 
-    d2m_Messege.V_d = 0;
-    d2m_Messege.V_q = 5;
+    d2m_Messege.V_d = m2d_Messege.TargetVd;
+    d2m_Messege.V_q = m2d_Messege.TargetVq;
 
     InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, d2m_Messege.AngularPosition,
                          &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
 
     d2m_Messege.ControlPhaseState = SVPWM(d2m_Messege.V_alpha, d2m_Messege.V_beta);
 
-    // update the voltage and current
-    d2m_Messege.MotorDriverVoltage = AdcMirror.ADCRESULT3 * 0.00732421875; // adc / 4096 * 3 * 10
-//    d2m_Messege.MotorDriverCurrent = DMABuf1[3] * 7.324e-8f;
+    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
+
 
 // Reinitialize for next ADC sequence
     AdcRegs.ADCTRL2.bit.RST_SEQ1   = 1;         // Reset SEQ1

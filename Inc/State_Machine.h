@@ -25,6 +25,9 @@
 #define RESET     		(3) // 复位
 #define APROXMT_ZERO 	(4) // 近似零位
 
+// user test interface
+#define TARGET_DQ       (5) // 目标DQ
+
 #define SELFCHECK_REACT 		(0x81) // 自检应答
 #define DELIVERRY_REACT 		(0x82) // 投放应答
 #define RESET_REACT     		(0x83) // 复位应答
@@ -46,6 +49,9 @@ typedef struct _Master2DriverMessege
 
 	Uint16 HighSpeedReverseNumber; 			// 高速反转圈数
 	Uint16 LowSpeedReverseNumber; 			// 低速反转圈数
+
+    float TargetVd;                         // VD
+    float TargetVq;                         // VQ
 } Master2DriverMessege; //
 
 
@@ -67,6 +73,7 @@ typedef struct _Driver2MasterMessege
 	Uint16 ThrowStatus;        		// 投放状态
 
 	// User test data
+	Uint16 TargetRotateTurns;       // 目标旋转圈数
 	// Motor current
 	float MotorDriver_IA;           // 电机驱动A相电流
 	float MotorDriver_IB;           // 电机驱动B相电流
@@ -138,5 +145,7 @@ void BLDC_TreePhaseCurrent(void);
  * @brief the 422 communication receive function
  */
 void CommunicationStateMachine(Uint16 Receive_Data);
+
+void BLDC_RotateTurnControl(Uint16 phase);
 
 #endif /* STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_ */
