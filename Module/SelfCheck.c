@@ -1,7 +1,7 @@
 /*
  * SelfCheck.c
  *
- *  Created on: 2016��6��1��
+ *  Created on: 2021
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -10,20 +10,10 @@
 
 void SelfCheck()
 {
-//	Uint16 Dat_Temp;
-//   *(Uint16*)(0x20FC00) = 0xA5A5;
-//   Dat_Temp = *(Uint16*)(0x20FC00);
-//   if(0xA5A5 == Dat_Temp)
-//   {
-//	   m_mis_fly_Messege.RAM_Check = 1;
-//   }
-//   else
-//   {
-//	   m_mis_fly_Messege.RAM_Check = 0;
-//   }
-//   m_mis_fly_Messege.Guide_Check  = 1;
-//   m_mis_fly_Messege.IMU_Check    = 1;
-//   m_mis_fly_Messege.Missile_Type = 0;
+    d2m_Messege.DriverBoardCheck = 0; // 驱动板自检故障码
+    d2m_Messege.MotorCheck       = 0; // 电机自检故障码
+    d2m_Messege.SoftwareVersion_L = 2;  // 驱动板软件版本号 低
+    d2m_Messege.SoftwareVersion_H = 1;  // 驱动板软件版本号 高
 
 }
 

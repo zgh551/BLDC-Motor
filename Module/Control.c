@@ -1,7 +1,7 @@
 /*
  * Control.c
  *
- *  Created on: 2016��3��1��
+ *  Created on: 2021
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -18,7 +18,7 @@
 /**
  * Position update frequency dictates the overall update frequency.
  */
-#define POSITION_UPDATE_FREQ   5000
+#define POSITION_UPDATE_FREQ   10000
 #define POSITION_UPDATE_DT     (float)(1.0/POSITION_UPDATE_FREQ)
 
 #define CURRENT_UPDATE_FREQ   10000
@@ -26,11 +26,16 @@
 
 #pragma CODE_SECTION(CurrentD_ControllerPID, "ramfuncs");
 #pragma CODE_SECTION(CurrentQ_ControllerPID, "ramfuncs");
+#pragma CODE_SECTION(SpeedControllerPID, "ramfuncs");
+#pragma CODE_SECTION(PositionControllerPID, "ramfuncs");
 
 #pragma DATA_SECTION(PID_Current_D, "DMARAML4");
 #pragma DATA_SECTION(PID_Current_Q, "DMARAML4");
+#pragma DATA_SECTION(PID_Speed, "DMARAML4");
+#pragma DATA_SECTION(PID_Position, "DMARAML4");
 
 PidObject PID_Current_Q, PID_Current_D;
+PidObject PID_Speed, PID_Position;
 
 void Control_Init(void)
 {
@@ -41,6 +46,14 @@ void Control_Init(void)
     //Current Q Control
     pidInit(&PID_Current_Q, 0, PID_CURRENT_Q_KP, PID_CURRENT_Q_KI, PID_CURRENT_Q_KD, CURRENT_UPDATE_DT);
     pidSetIntegralLimit(&PID_Current_Q, PID_CURRENT_Q_INTEGRATION_LIMIT);
+
+    // Speed control
+    pidInit(&PID_Speed, 0, PID_SPEED_KP, PID_SPEED_KI, PID_SPEED_KD, CURRENT_UPDATE_DT);
+    pidSetIntegralLimit(&PID_Speed, PID_SPEED_INTEGRATION_LIMIT);
+
+    // Position control
+    pidInit(&PID_Position, 0, PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD, CURRENT_UPDATE_DT);
+    pidSetIntegralLimit(&PID_Position, PID_POSITION_INTEGRATION_LIMIT);
 }
 
 /******Position function*********/
@@ -56,20 +69,15 @@ void CurrentQ_ControllerPID(float i_desired, float i_actual, float *i_out)
     *i_out = pidUpdate(&PID_Current_Q, i_actual, 1);
 }
 
-//Get the position PID output
-//void controllerGetActuatorPositionOutput(int16 *Position)
-//{
-//	*Position = PositionOutput;
-//}
+void SpeedControllerPID(float i_desired, float i_actual, float *i_out)
+{
+    pidSetDesired(&PID_Speed, i_desired);
+    *i_out = pidUpdate(&PID_Speed, i_actual, 1);
+}
 
-//void controllerCorrectCurrentPID(float CurrentActual,float CurrentDesired,int16 *CurrentOutput)
-//{
-//	pidSetDesired(&PID_Current, CurrentDesired);
-//	TRUNCATE_SINT16(*CurrentOutput, pidUpdate(&PID_Current, CurrentActual, 1));
-//}
+void PositionControllerPID(float i_desired, float i_actual, float *i_out)
+{
+    pidSetDesired(&PID_Position, i_desired);
+    *i_out = pidUpdate(&PID_Position, i_actual, 1);
+}
 
-//Get the Current PID output
-//void controllerGetActuatorCurrentOutput(int16 *Current)
-//{
-//	*Current = CurrentOutput;
-//}

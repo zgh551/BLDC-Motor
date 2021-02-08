@@ -1,7 +1,7 @@
 /*
  * Steering_ADC.c
  *
- *  Created on: 2016��3��3��
+ *  Created on: 2021
  *      Author: ZGH
  *      Version:V1.0.0
  */
@@ -34,7 +34,7 @@
 
 //#define Ratio_Factor
 //#pragma DATA_SECTION(DMABuf1,"DMARAML4");
-extern volatile Uint16 DMABuf1[BUF_SIZE];
+//extern volatile Uint16 DMABuf1[BUF_SIZE];
 
 // Prototype statements for functions found within this file.
 __interrupt void adc_isr(void);
@@ -42,7 +42,10 @@ __interrupt void adc_isr(void);
 volatile Uint16 *DMADest;
 volatile Uint16 *DMASource;
 
-
+static float rate_temp = 0.0f;
+static float last_angle;
+static Uint16 first_enter;
+static Uint16 angle_rate_cnt;
 
 void Steering_ADC_Init(void)
 {
@@ -69,15 +72,18 @@ void Steering_ADC_Init(void)
    AdcRegs.ADCTRL2.bit.RST_SEQ1       = 0x1;  // Immediately reset sequencer to state CONV00
    AdcRegs.ADCTRL2.bit.EPWM_SOCA_SEQ1 = 0x1;  // Enable SOCA from ePWM to start SEQ1
 
-   AdcRegs.ADCCHSELSEQ1.bit.CONV00    = 0x7;  // Setup ADCINA7 as 1st SEQ1 conv.
+   AdcRegs.ADCCHSELSEQ1.bit.CONV00    = 0x5;  // Setup ADCINA5 as 1st SEQ1 conv.
    AdcRegs.ADCCHSELSEQ1.bit.CONV01    = 0x6;  // Setup ADCINA6 as 2nd SEQ1 conv.
-   AdcRegs.ADCCHSELSEQ1.bit.CONV02    = 0x5;  // Setup ADCINA5 as 3td SEQ1 conv.
+   AdcRegs.ADCCHSELSEQ1.bit.CONV02    = 0x7;  // Setup ADCINA7 as 3td SEQ1 conv.
    AdcRegs.ADCCHSELSEQ1.bit.CONV03    = 0x4;  // Setup ADCINA4 as 4fr SEQ1 conv.
 
    AdcRegs.ADCMAXCONV.bit.MAX_CONV1   = 3;      // Set up ADC to perform 1 conversions for every SOC
 
    AdcRegs.ADCREFSEL.bit.REF_SEL = 0 ;          // Internal reference selected
 //   AdcRegs.ADCTRL1.bit.CONT_RUN = 0;          // Setup continuous run
+
+   first_enter = 0xABCD;
+   angle_rate_cnt = 0;
 }
 
 void Steering_ADC_EPwm(void)
@@ -105,8 +111,8 @@ void Steerint_ADC_DMA_Init(void)
    DMAInitialize();
 
 // Configure DMA Channel
-   DMADest   = &DMABuf1[0];              //Point DMA destination to the beginning of the array
-   DMASource = &AdcMirror.ADCRESULT0;    //Point DMA source to ADC result register base
+//   DMADest   = &DMABuf1[0];              //Point DMA destination to the beginning of the array
+//   DMASource = &AdcMirror.ADCRESULT0;    //Point DMA source to ADC result register base
 
    DMACH1AddrConfig(DMADest, DMASource);
 
@@ -167,15 +173,64 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 
 __interrupt void  adc_isr(void)
 {
-    d2m_Messege.MotorDriver_IA = AdcMirror.ADCRESULT0 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IB = AdcMirror.ADCRESULT1 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IC = AdcMirror.ADCRESULT2 * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IA = (int16)(AdcMirror.ADCRESULT0 - 230) * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IB = (int16)(AdcMirror.ADCRESULT1 - 230) * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IC = (int16)(AdcMirror.ADCRESULT2 - 230) * 3.329e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
     // update the voltage and current
-    d2m_Messege.MotorDriverVoltage = AdcMirror.ADCRESULT3 * 0.00732421875; // adc / 4096 * 3 * 10
+    d2m_Messege.MotorDriverVoltage = AdcMirror.ADCRESULT3 * 0.0076171875; // adc / 4096 * 3 * 10.4
 
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
 
+//    if (0xABCD == first_enter)
+//    {
+//        last_angle = d2m_Messege.AngularPosition;
+//        d2m_Messege.AngularVelocity = 0;
+//        first_enter = 0x1234;
+//    }
+//    else if (0x1234 == first_enter)
+//    {
+//        last_angle = d2m_Messege.AngularPosition;
+//        d2m_Messege.AngularVelocity = 0;
+//        first_enter = 0;
+//    }
+//    else
+//    {
+//        angle_rate_cnt++;
+//        if (fabs(d2m_Messege.AngularPosition - last_angle) > 0.03f)
+//        {
+//            if (angle_rate_cnt > 0)
+//            {
+//                d2m_Messege.AngularVelocity = (((d2m_Messege.AngularPosition - last_angle) < -3.5f) ?  6.28f :
+//                                               ((d2m_Messege.AngularPosition - last_angle) >  3.5f) ? -6.28f : 0
+//                                            +   (d2m_Messege.AngularPosition - last_angle)) * 1591.54f /  angle_rate_cnt;
+//                angle_rate_cnt = 0;
+//
+//            }
+//            else
+//            {
+//                d2m_Messege.AngularVelocity = 0;
+//            }
+//        }
+
+//        rate_temp = ((((d2m_Messege.AngularPosition - last_angle) < -5.5f) ?  6.28f :
+//                      ((d2m_Messege.AngularPosition - last_angle) >  5.5f) ? -6.28f : 0)
+//                  +    (d2m_Messege.AngularPosition - last_angle)) * 1591.54f;
+//
+//        if ((fabs(d2m_Messege.AngularVelocity - rate_temp) < 15) || (fabs(rate_temp) > 6))
+//        {
+//            d2m_Messege.AngularVelocity = rate_temp;
+//        }
+
+
+//        if (d2m_Messege.AngularVelocity < -1000)
+//        {
+//            d2m_Messege.AngularVelocity = 0;
+//        }
+//    }
+
+
+    // Current Translate
 //    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
 //
 //    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,
@@ -183,25 +238,32 @@ __interrupt void  adc_isr(void)
 //
 //    ParkTransform(d2m_Messege.I_alpha, d2m_Messege.I_beta, d2m_Messege.AngularPosition,
 //                  &d2m_Messege.I_d, &d2m_Messege.I_q);
-//
-//    CurrentD_ControllerPID(0, d2m_Messege.I_d, &d2m_Messege.V_d);
-//    CurrentQ_ControllerPID(3, d2m_Messege.I_q, &d2m_Messege.V_q);
 
-    d2m_Messege.V_d = m2d_Messege.TargetVd;
-    d2m_Messege.V_q = m2d_Messege.TargetVq;
+    // 位置控制
+//    PositionControllerPID(m2d_Messege.TargetPosition, d2m_Messege.AngularPosition, &m2d_Messege.TargetAngleVelocity);
+    // 速度控制
+//    SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &m2d_Messege.TargetVq);
+
+    // 电流控制
+//    CurrentD_ControllerPID(m2d_Messege.TargetVd, d2m_Messege.I_d, &d2m_Messege.V_d);
+//    CurrentQ_ControllerPID(m2d_Messege.TargetVq, d2m_Messege.I_q, &d2m_Messege.V_q);
+
+//    d2m_Messege.V_d = 0;//m2d_Messege.TargetVd;
+//    d2m_Messege.V_q = m2d_Messege.TargetVq;
+
+//    d2m_Messege.V_d = 0;
+//    d2m_Messege.V_q = 6;
 
     InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, d2m_Messege.AngularPosition,
                          &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
 
     d2m_Messege.ControlPhaseState = SVPWM(d2m_Messege.V_alpha, d2m_Messege.V_beta);
 
-    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
-
-
-// Reinitialize for next ADC sequence
+//    last_angle = d2m_Messege.AngularPosition;
+//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
+    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
+    // Reinitialize for next ADC sequence
     AdcRegs.ADCTRL2.bit.RST_SEQ1   = 1;         // Reset SEQ1
     AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;   // Acknowledge interrupt to PIE
-
-    return;
 }

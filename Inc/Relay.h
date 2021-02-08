@@ -1,12 +1,12 @@
 /*
  * Relay.h
  *
- *  Created on: 2016Äê4ÔÂ24ÈÕ
+ *  Created on: 2021
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V3_INC_RELAY_H_
-#define STEERINGENGINE_28335_V3_INC_RELAY_H_
+#ifndef _INC_RELAY_H_
+#define _INC_RELAY_H_
 
 #include "include.h"
 

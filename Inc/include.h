@@ -1,12 +1,12 @@
 /*
  * include.h
  *
- *  Created on: 2016��6��1��
+ *  Created on: 2021
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V4_INC_INCLUDE_H_
-#define STEERINGENGINE_28335_V4_INC_INCLUDE_H_
+#ifndef _INC_INCLUDE_H_
+#define _INC_INCLUDE_H_
 
 #include <math.h>
 #include "Steering_ADC.h"

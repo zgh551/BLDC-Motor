@@ -1,7 +1,7 @@
 /*
  * State_Machine.c
  *
- *  Created on: 2016��4��23��
+ *  Created on: 2021
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -9,6 +9,11 @@
 
 #pragma DATA_SECTION(Rdata, "DMARAML5");
 #pragma DATA_SECTION(Tdata, "DMARAML5");
+#pragma DATA_SECTION(m2d_Messege, "DMARAML7");
+#pragma DATA_SECTION(d2m_Messege, "DMARAML7");
+
+#pragma CODE_SECTION(BLDC_SelfCheck, "ramfuncs");
+#pragma CODE_SECTION(CommandResponse, "ramfuncs");
 
 #define ARINC429_Send   10
 
@@ -28,11 +33,16 @@ CommunicationState Com422_State = HeadFirst;
 
 typedef enum {
 WaitStart = 0,
+TotalTurns,
+HightReset,
+LowReset,
 Running,
+WaitTime,
 WaitStop
 } RotateControlState;
 RotateControlState BLDC_RotateState = WaitStart;
-Uint16 rotate_turn_cnt = 0, last_phase = 0;
+static Uint16 rotate_turn_cnt = 0, last_phase = 0;
+static Uint16 total_turns = 0;
 
 //422 Communication
 typedef struct _RxData{
@@ -56,6 +66,14 @@ Master2DriverMessege m2d_Messege;
 Driver2MasterMessege d2m_Messege;
 Uint16 TelemetrySendFlag;
 Uint16 Time5msSendFlag;
+Uint16 TimeDQCurrentSendFlag;
+
+Uint16 rx_commond = 0;
+
+static Uint16 TotalTurnCount = 0, CurrentTurnIndex = 0, CurrentTurnCount = 0;
+static float current_angle_rate = 0.0f, current_angle = 0.0f;
+static float rote_time_count = 0.0f, wait_time_count = 0.0f;
+static float target_rote_time     = 0.0f, target_wait_time = 0.0f;
 
 void StateMachine_Init(void)
 {
@@ -65,11 +83,17 @@ void StateMachine_Init(void)
 	Rdata.cmd 	    = 0;
 	Rdata.len    	= 0;
 	Rdata.checksum	= 0;
-	for(i = 0; i < 240; i++)
+	for(i = 0; i < 100; i++)
 	{
 		Rdata.data[i] = 0;
 	}
 	dat_cnt=0;
+
+	m2d_Messege.TargetVd = 0;
+	m2d_Messege.TargetVq = 0;
+
+    d2m_Messege.V_d = 0;
+    d2m_Messege.V_q = 0;
 }
 
 void BLDC_SelfCheck(void)
@@ -196,7 +220,7 @@ void BLDC_CycleSend500ms(void)
 //	          ? -d2m_Messege.AngularVelocity * 100
 //	          :  d2m_Messege.AngularVelocity * 100; // 电机角速度
 //	Tdata.data[5] =  temp_data & 0x00ff;
-//	Tdata.data[6] = (temp_data >> 8) & 0x00ff; // [0 - 54000] deg
+//	Tdata.data[6] = (temp_data >> 8) & 0x00ff; // [0 - 54000] deg/s
 
 
 	Tdata.data[7] = d2m_Messege.MotorStatus; // 电机状态参数
@@ -244,19 +268,50 @@ void BLDC_TelemetrySend(void)
 void BLDC_TreePhaseCurrent(void)
 {
     Uint16 i = 0, check_sum = 0;
-    Uint16 temp_data = 0;
+    int16 temp_data = 0;
     Tdata.len = 8;
     Tdata.data[0] = TREE_PHASE_CURRENT;
-    temp_data = (Uint16)(d2m_Messege.MotorDriver_IA * 1000); // A相电流
+    temp_data = (int16)(d2m_Messege.MotorDriver_IA * 1000); // A相电流
     Tdata.data[1] =  temp_data & 0x00ff;
     Tdata.data[2] = (temp_data >> 8) & 0x00ff;
-    temp_data = (Uint16)(d2m_Messege.MotorDriver_IB * 1000); // B相电流
+    temp_data = (int16)(d2m_Messege.MotorDriver_IB * 1000); // B相电流
     Tdata.data[3] =  temp_data & 0x00ff;
     Tdata.data[4] = (temp_data >> 8) & 0x00ff;
-    temp_data = (Uint16)(d2m_Messege.MotorDriver_IC * 1000); // C相电流
+    temp_data = (int16)(d2m_Messege.MotorDriver_IC * 1000); // C相电流
     Tdata.data[5] =  temp_data & 0x00ff;
     Tdata.data[6] = (temp_data >> 8) & 0x00ff;
     Tdata.data[7] = d2m_Messege.FaultState & 0x00ff;
+
+    Steering_Send_Byte_B(0x55);
+    Steering_Send_Byte_B(0x77);
+    Steering_Send_Byte_B(Tdata.len);
+    check_sum = 0;
+    for (i = 0; i < Tdata.len; i++)
+    {
+        check_sum += Tdata.data[i];
+        Steering_Send_Byte_B(Tdata.data[i]);
+    }
+    Steering_Send_Byte_B(check_sum & 0x00ff);
+}
+
+void BLDC_FeedbackCurrent(void)
+{
+    Uint16 i = 0, check_sum = 0;
+    int16 temp_data = 0;
+    Tdata.len = 8;
+    Tdata.data[0] = FEEDBACK_CURRENT;
+    temp_data = (int16)(d2m_Messege.I_d * 1000); // D电流
+    Tdata.data[1] =  temp_data       & 0x00ff;
+    Tdata.data[2] = (temp_data >> 8) & 0x00ff;
+//    temp_data = (int16)(d2m_Messege.I_q * 1000); // Q电流
+    temp_data = (int16)(m2d_Messege.TargetVq * 1000); // Q电流
+
+    Tdata.data[3] =  temp_data       & 0x00ff;
+    Tdata.data[4] = (temp_data >> 8) & 0x00ff;
+
+    Tdata.data[5] = 0;
+    Tdata.data[6] = 0;
+    Tdata.data[7] = 0;
 
     Steering_Send_Byte_B(0x55);
     Steering_Send_Byte_B(0x77);
@@ -276,8 +331,8 @@ void CommunicationStateMachine(Uint16 Receive_Data)
 	switch(Com422_State)
 	{
 		case HeadFirst:
-				Com422_State = (Receive_Data == FirstCheckChar) 
-							 ? HeadSecond : HeadFirst;
+            Com422_State = (Receive_Data == FirstCheckChar)
+						 ? HeadSecond : HeadFirst;
 		break;
 
 		case HeadSecond:
@@ -342,8 +397,13 @@ void CommunicationStateMachine(Uint16 Receive_Data)
                 else if(TARGET_DQ == Rdata.cmd) //目标DQ值
                 {
                     m2d_Messege.Commond = Rdata.data[0];
-                    m2d_Messege.TargetVd = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.001f; //(int16)(Rdata.data[2] << 8) | Rdata.data[1]
-                    m2d_Messege.TargetVq = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.001f; //
+                    m2d_Messege.TargetVd = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.001f; //D
+                    m2d_Messege.TargetVq = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.001f; //Q
+                }
+                else if (TARGET_SPEED == Rdata.cmd) // 目标速度和目标角度
+                {
+                    m2d_Messege.TargetAngleVelocity = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.001f; // 目标角速度
+                    m2d_Messege.TargetPosition      = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.001f; // 目标位置
                 }
 				else
 				{
@@ -357,7 +417,7 @@ void CommunicationStateMachine(Uint16 Receive_Data)
 			Com422_State = HeadFirst;
 		break;
 
-		default :
+		default:
 			Com422_State = HeadFirst;
 		break;
 	}
@@ -375,6 +435,14 @@ void BLDC_RotateTurnControl(Uint16 phase)
                 m2d_Messege.Commond = 0;
                 BLDC_RotateState = Running;
             }
+            else if (m2d_Messege.Commond == RESET)
+            {
+                BLDC_Start();
+                rotate_turn_cnt = 0;
+                m2d_Messege.Commond = 0;
+                d2m_Messege.V_q = 4;
+                BLDC_RotateState = HightReset;
+            }
             else
             {
                 BLDC_Stop();
@@ -382,8 +450,9 @@ void BLDC_RotateTurnControl(Uint16 phase)
             break;
 
         case Running:
-            if (rotate_turn_cnt >= m2d_Messege.RotateTurns[0] )
+            if (rotate_turn_cnt >= m2d_Messege.RotateTurns[0])
             {
+                d2m_Messege.V_q = 0;
                 BLDC_RotateState = WaitStop;
             }
             else
@@ -392,6 +461,46 @@ void BLDC_RotateTurnControl(Uint16 phase)
                 {
                     rotate_turn_cnt++;
                 }
+                d2m_Messege.V_q = 5;
+            }
+            break;
+
+        case HightReset:
+            if (rotate_turn_cnt >= m2d_Messege.HighSpeedReverseNumber)
+            {
+                rotate_turn_cnt = 0;
+                BLDC_RotateState = LowReset;
+            }
+            else
+            {
+                if((last_phase != phase) && (phase == 1))
+                {
+                    rotate_turn_cnt++;
+                    if(d2m_Messege.V_q > 8.0f)
+                    {
+                        d2m_Messege.V_q = 8.0f;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 0.5f;
+                    }
+                }
+            }
+            break;
+
+        case LowReset:
+            if (rotate_turn_cnt >= m2d_Messege.LowSpeedReverseNumber)
+            {
+                d2m_Messege.V_q = 0;
+                BLDC_RotateState = WaitStop;
+            }
+            else
+            {
+                if((last_phase != phase) && (phase == 1))
+                {
+                    rotate_turn_cnt++;
+                }
+                d2m_Messege.V_q = 4;
             }
             break;
 
@@ -405,4 +514,199 @@ void BLDC_RotateTurnControl(Uint16 phase)
             break;
     }
     last_phase = phase;
+}
+
+//基于圈数
+void BLDC_RotateTurnControlPro(Uint16 phase)
+{
+    switch(BLDC_RotateState)
+    {
+        case WaitStart:
+            if (m2d_Messege.Commond == DELIVERRY)
+            {
+                BLDC_Start();
+                m2d_Messege.Commond = 0;
+                TotalTurnCount = m2d_Messege.MotorRotateCount;
+                CurrentTurnIndex = 0;
+                BLDC_RotateState = TotalTurns;
+            }
+            else if (m2d_Messege.Commond == RESET)
+            {
+                BLDC_Start();
+                rotate_turn_cnt = 0;
+                m2d_Messege.Commond = 0;
+                d2m_Messege.V_q = 4;
+                BLDC_RotateState = HightReset;
+            }
+            else
+            {
+                BLDC_Stop();
+            }
+            break;
+
+        case TotalTurns:
+            if (CurrentTurnIndex < TotalTurnCount)
+            {
+//                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01; // 旋转总运行时间(s)
+                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05; // 两次的时间间隔 (s)
+                CurrentTurnCount   = m2d_Messege.RotateTurns [CurrentTurnIndex];// r/s 旋转圈数/s
+                rotate_turn_cnt    = 0;
+                BLDC_RotateState   = Running;
+            }
+            else
+            {
+                BLDC_RotateState = WaitStop;
+            }
+            break;
+
+        case Running:
+            if (rotate_turn_cnt > CurrentTurnCount)
+            {
+                CurrentTurnIndex++;
+                wait_time_count = 0;
+                d2m_Messege.V_q = 0;
+                BLDC_RotateState = WaitTime;
+            }
+            else
+            {
+                if((last_phase != phase) && (phase == 1))
+                {
+                    rotate_turn_cnt++;
+                }
+                d2m_Messege.V_q = 5;
+            }
+            break;
+
+        case WaitTime:
+            if (wait_time_count > target_wait_time)
+            {
+                BLDC_RotateState = TotalTurns;
+            }
+            else
+            {
+                wait_time_count += 0.0001f;
+            }
+            break;
+
+        case HightReset:
+            if (rotate_turn_cnt > m2d_Messege.HighSpeedReverseNumber)
+            {
+                rotate_turn_cnt = 0;
+                BLDC_RotateState = LowReset;
+            }
+            else
+            {
+                if((last_phase != phase) && (phase == 1))
+                {
+                    rotate_turn_cnt++;
+                    if(d2m_Messege.V_q > 8.0f)
+                    {
+                        d2m_Messege.V_q = 8.0f;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 0.5f;
+                    }
+                }
+            }
+            break;
+
+        case LowReset:
+            if (rotate_turn_cnt >= m2d_Messege.LowSpeedReverseNumber)
+            {
+                d2m_Messege.V_q = 0;
+                BLDC_RotateState = WaitStop;
+            }
+            else
+            {
+                if((last_phase != phase) && (phase == 1))
+                {
+                    rotate_turn_cnt++;
+                }
+                d2m_Messege.V_q = 4;
+            }
+            break;
+
+        case WaitStop:
+            BLDC_Stop();
+            BLDC_RotateState = WaitStart;
+            break;
+
+        default:
+
+            break;
+    }
+    last_phase = phase;
+}
+
+// 基于位置控制旋转圈数
+void BLDC_RotateTurnControlPosition(Uint16 phase)
+{
+    switch(BLDC_RotateState)
+    {
+        case WaitStart:
+            if (m2d_Messege.Commond == DELIVERRY)
+            {
+                BLDC_Start();
+                m2d_Messege.Commond = 0;
+                TotalTurnCount = m2d_Messege.MotorRotateCount;
+                CurrentTurnIndex = 0;
+                BLDC_RotateState = TotalTurns;
+            }
+            else
+            {
+                BLDC_Stop();
+            }
+            break;
+
+        case TotalTurns:
+            if (CurrentTurnIndex < TotalTurnCount)
+            {
+                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01; // 旋转总运行时间(s)
+                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05; // 两次的时间间隔 (s)
+                current_angle_rate = m2d_Messege.RotateTurns [CurrentTurnIndex] / target_rote_time;// r/s 旋转圈数/s
+                rote_time_count    = 0.0f;
+                current_angle      = 0.0f;
+                BLDC_RotateState   = Running;
+            }
+            else
+            {
+                BLDC_RotateState = WaitStop;
+            }
+            break;
+
+        case Running:
+            if (rote_time_count > target_rote_time)
+            {
+                CurrentTurnIndex++;
+                wait_time_count = 0;
+                BLDC_RotateState = WaitTime;
+            }
+            else
+            {
+                current_angle   += current_angle_rate * rote_time_count;
+                m2d_Messege.TargetPosition = fmodf(current_angle, 360.0f);
+                rote_time_count += 0.005f;
+            }
+            break;
+
+        case WaitTime:
+            if (wait_time_count > target_wait_time)
+            {
+                BLDC_RotateState = TotalTurns;
+            }
+            else
+            {
+                wait_time_count += 0.005f;
+            }
+            break;
+
+        case WaitStop:
+            BLDC_Stop();
+            BLDC_RotateState = WaitStart;
+            break;
+
+        default:
+            break;
+    }
 }

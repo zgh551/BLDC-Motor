@@ -1,7 +1,7 @@
 /*
  * Digital_IO.c
  *
- *  Created on: 2016��6��3��
+ *  Created on: 2021
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -118,19 +118,19 @@ void AD2S1210_Init(void)
     AD2S1210_ConfigModeWrite(CONTROL, 0x7F);
 
     // configure the EXCITATION FREQUENCY register
-    AD2S1210_ConfigModeWrite(EXCITATION_FREQUENCY, 0x18); // 6khz
+//    AD2S1210_ConfigModeWrite(EXCITATION_FREQUENCY, 0x18); // 6khz
 
     // LOS Threshold
-    AD2S1210_ConfigModeWrite(LOS_THRESHOLD, 0x38); // 1.1 v
+    AD2S1210_ConfigModeWrite(LOS_THRESHOLD, 0x30); // 1.1 v
 
     // DOS mism Threshold
-    AD2S1210_ConfigModeWrite(DOS_MISM_THRESHOLD, 0x12); // 0.684 v
+//    AD2S1210_ConfigModeWrite(DOS_MISM_THRESHOLD, 0x12); // 0.684 v
 
     // LOT high threshold
-    AD2S1210_ConfigModeWrite(LOT_HIGH_THRESHOLD, 0x46); // 10 deg
+//    AD2S1210_ConfigModeWrite(LOT_HIGH_THRESHOLD, 0x23); // 10 deg
 
     // LOT low threshold
-    AD2S1210_ConfigModeWrite(LOT_LOW_THRESHOLD, 0x23); // 5 deg
+//    AD2S1210_ConfigModeWrite(LOT_LOW_THRESHOLD, 0x08); // 5 deg
 
     DELAY_US(WR_DELAY_TIME);
     *(Uint16*)(0x200003) = FAULT;

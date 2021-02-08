@@ -1,12 +1,12 @@
 /*
  * State_Machine.h
  *
- *  Created on: 2016��4��23��
+ *  Created on: 2021
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_
-#define STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_
+#ifndef _INC_STATE_MACHINE_H_
+#define _INC_STATE_MACHINE_H_
 
 #include "include.h"
 
@@ -27,6 +27,7 @@
 
 // user test interface
 #define TARGET_DQ       (5) // 目标DQ
+#define TARGET_SPEED    (6) // 目标目标速度
 
 #define SELFCHECK_REACT 		(0x81) // 自检应答
 #define DELIVERRY_REACT 		(0x82) // 投放应答
@@ -36,6 +37,7 @@
 #define TELEMETRY_SEND 			(0x86) // 遥测数据发送
 // user define commond
 #define TREE_PHASE_CURRENT      (0x91) // 三相电流发送
+#define FEEDBACK_CURRENT        (0x92) // 反馈DQ电流
 
 typedef struct _Master2DriverMessege
 {
@@ -52,6 +54,10 @@ typedef struct _Master2DriverMessege
 
     float TargetVd;                         // VD
     float TargetVq;                         // VQ
+
+    float TargetAngleVelocity;              // 目标角速度
+    float TargetPosition;                   // 目标位置
+
 } Master2DriverMessege; //
 
 
@@ -104,6 +110,9 @@ extern Driver2MasterMessege d2m_Messege;
 
 extern Uint16 TelemetrySendFlag;
 extern Uint16 Time5msSendFlag;
+extern Uint16 TimeDQCurrentSendFlag;
+
+extern Uint16 rx_commond;
 /**
  * @brief the state machine initialize
  */
@@ -141,11 +150,23 @@ void BLDC_TelemetrySend(void);
  */
 void BLDC_TreePhaseCurrent(void);
 
+/*
+ * @brief the current feedback
+ */
+void BLDC_FeedbackCurrent(void);
+
+
 /**
  * @brief the 422 communication receive function
  */
 void CommunicationStateMachine(Uint16 Receive_Data);
 
 void BLDC_RotateTurnControl(Uint16 phase);
+
+//基于圈数支持多包
+void BLDC_RotateTurnControlPro(Uint16 phase);
+
+// 基于位置控制旋转圈数
+void BLDC_RotateTurnControlPosition(Uint16 phase);
 
 #endif /* STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_ */

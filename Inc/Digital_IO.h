@@ -1,12 +1,12 @@
 /*
  * Digital_IO.h
  *
- *  Created on: 2016��6��3��
+ *  Created on: 2021
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V4_INC_DIGITAL_IO_H_
-#define STEERINGENGINE_28335_V4_INC_DIGITAL_IO_H_
+#ifndef _INC_DIGITAL_IO_H_
+#define _INC_DIGITAL_IO_H_
 #include "include.h"
 
 #define POSITION_H              (0x80)

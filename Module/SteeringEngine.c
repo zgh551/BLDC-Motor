@@ -1,7 +1,7 @@
 /*
  * TeeringEngine.c
  *
- *  Created on: 2016��3��4��
+ *  Created on: 2021
  *      Author: ZGH
  *      version:V1.0.0
  */
@@ -53,8 +53,8 @@ void InitEPwmBLDC(void)
     EPwm1Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM1A
     EPwm1Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm1Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi complementary
-    EPwm1Regs.DBFED                 = 50;               // FED = 50 TBCLKs
-    EPwm1Regs.DBRED                 = 50;               // RED = 50 TBCLKs
+    EPwm1Regs.DBFED                 = 100;               // FED = 50 TBCLKs
+    EPwm1Regs.DBRED                 = 100;               // RED = 50 TBCLKs
 
     // EPWM Module 2 config
     EPwm2Regs.TBPRD                 = PWM_COUNT;        // Period = 900 TBCLK counts
@@ -73,8 +73,8 @@ void InitEPwmBLDC(void)
     EPwm2Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM2A
     EPwm2Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm2Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi Complementary
-    EPwm2Regs.DBFED                 = 50;               // FED = 50 TBCLKs
-    EPwm2Regs.DBRED                 = 50;               // RED = 50 TBCLKs
+    EPwm2Regs.DBFED                 = 100;               // FED = 50 TBCLKs
+    EPwm2Regs.DBRED                 = 100;               // RED = 50 TBCLKs
 
     // EPWM Module 3 config
     EPwm3Regs.TBPRD                 = PWM_COUNT;        // Period = 900 TBCLK counts
@@ -93,8 +93,8 @@ void InitEPwmBLDC(void)
     EPwm3Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM3A
     EPwm3Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm3Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi complementary
-    EPwm3Regs.DBFED                 = 50;               // FED = 50 TBCLKs
-    EPwm3Regs.DBRED                 = 50;               // RED = 50 TBCLKs
+    EPwm3Regs.DBFED                 = 100;               // FED = 50 TBCLKs
+    EPwm3Regs.DBRED                 = 100;               // RED = 50 TBCLKs
 
     // Run Time (Note: Example execution of one run-time instant)
     //===========================================================
@@ -107,17 +107,43 @@ void InitEPwmBLDC(void)
 
 void ePWM1_LowLevelDutyTime(float time) // us
 {
-    EPwm1Regs.CMPA.half.CMPA = (Uint16)(time * 75); // adjust duty for output EPWM1A
+    Uint16  temp_value = (Uint16)(time * 75);
+    if (temp_value > PWM_COUNT)
+    {
+        EPwm1Regs.CMPA.half.CMPA = PWM_COUNT; // adjust duty for output EPWM1A
+    }
+    else
+    {
+        EPwm1Regs.CMPA.half.CMPA = temp_value; // adjust duty for output EPWM1A
+    }
+
 }
 
 void ePWM2_LowLevelDutyTime(float time) // us
 {
-    EPwm2Regs.CMPA.half.CMPA = (Uint16)(time * 75); // adjust duty for output EPWM1A
+    Uint16  temp_value = (Uint16)(time * 75);
+    if (temp_value > PWM_COUNT)
+    {
+        EPwm2Regs.CMPA.half.CMPA = PWM_COUNT; // adjust duty for output EPWM2A
+    }
+    else
+    {
+        EPwm2Regs.CMPA.half.CMPA = (Uint16)(time * 75); // adjust duty for output EPWM2A
+    }
 }
 
 void ePWM3_LowLevelDutyTime(float time) // us
 {
-    EPwm3Regs.CMPA.half.CMPA = (Uint16)(time * 75); // adjust duty for output EPWM1A
+    Uint16  temp_value = (Uint16)(time * 75);
+    if (temp_value > PWM_COUNT)
+    {
+        EPwm3Regs.CMPA.half.CMPA = PWM_COUNT; // adjust duty for output EPWM3A
+    }
+    else
+    {
+        EPwm3Regs.CMPA.half.CMPA = temp_value; // adjust duty for output EPWM3A
+    }
+
 }
 
 
@@ -129,33 +155,8 @@ void BLDC_Start()
 void BLDC_Stop()
 {
     BLDC_ShutDown(0);
+    EPwm1Regs.CMPA.half.CMPA = PWM_COUNT; // adjust duty for output EPWM1A
+    EPwm2Regs.CMPA.half.CMPA = PWM_COUNT; // adjust duty for output EPWM2A
+    EPwm3Regs.CMPA.half.CMPA = PWM_COUNT; // adjust duty for output EPWM3A
 }
 
-//int16 limitPosition(int16 value)
-//{
-//	if(value > 1500)
-//	{
-//		value = 1500;
-//	}
-//	else if(value < -1499)
-//	{
-//		value = -1499;
-//	}
-//	return value;
-//}
-
-//void SteeringPowerOutput(int16 PositionPIDOutput)
-//{
-//	if(PositionPIDOutput < 0)
-//	{
-//		ePWM_Duty(1499 + limitPosition(PositionPIDOutput));
-//	}
-//	else if(0 == PositionPIDOutput)
-//	{
-//		ePWM_Duty(1499);
-//	}
-//	else
-//	{
-//		ePWM_Duty(1499 + limitPosition(PositionPIDOutput));
-//	}
-//}
