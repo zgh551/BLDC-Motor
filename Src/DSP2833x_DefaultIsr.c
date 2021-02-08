@@ -27,28 +27,28 @@
 #include "include.h"
 
 //ADC ISR
-Uint16 ADC_Value;
-Uint16 DMABuf1[5];
-Uint16 FW,FI;
+//Uint16 ADC_Value;
+//Uint16 DMABuf1[5];
+//Uint16 FW,FI;
 
 //CPU_TIMER0 ISR
-Uint16 cnt=0,cnt_500ms=0,cnt_select=0;
+//Uint16 cnt=0,cnt_500ms=0,cnt_select=0;
 //PID  Control
-int16  m_position,m_voltage_output;
-Uint16 Target_Position=500;
-Uint16 StateFlag=0;
+//int16  m_position,m_voltage_output;
+//Uint16 Target_Position=500;
+//Uint16 StateFlag=0;
 
 //External Interrupt
-Uint16 Data_Type,i;
-Uint32 ARINC_Dat_H,ARINC_Dat_L;
-volatile Uint32 ARINC_Data;
-volatile Uint16 Luach_Flag = 0,Power_Flag = 0;
-volatile Uint16 FK_Dat=0,IMU_Dat=0,DY_Dat=0,Power_Dat=0;
+//Uint16 Data_Type,i;
+//Uint32 ARINC_Dat_H,ARINC_Dat_L;
+//volatile Uint32 ARINC_Data;
+//volatile Uint16 Luach_Flag = 0,Power_Flag = 0;
+//volatile Uint16 FK_Dat=0,IMU_Dat=0,DY_Dat=0,Power_Dat=0;
 
 
-Uint16 fault_status;
+//Uint16 fault_status;
 
-float v_alpha, v_beta;
+//float v_alpha, v_beta;
 
 // Connected to INT13 of CPU (use MINT13 mask):
 // Note CPU-Timer1 is reserved for TI use, however XINT13
@@ -344,18 +344,14 @@ interrupt void  ADCINT_ISR(void)     // ADC
 interrupt void  TINT0_ISR(void)      // CPU-Timer 0
 {
     // Insert ISR Code here
-    cnt_500ms = (cnt_500ms + 1) % 10;
-    if(0 == cnt_500ms)
-    {
-        TelemetrySendFlag = 0xAABB;
-        LedRunning();
-    }
-    else if(1 == cnt_500ms)
-    {
-        Time5msSendFlag = 0xABCD;
-    }
-// To receive more interrupts from this PIE group, acknowledge this interrupt
-    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+
+    // To receive more interrupts from this PIE group, acknowledge this interrupt
+    // PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+
+    // Next two lines for debug only to halt the processor here
+    // Remove after inserting ISR Code
+    asm ("      ESTOP0");
+    for(;;);
 }
 
 
@@ -1102,37 +1098,15 @@ interrupt void ECAN1INTB_ISR(void)  // eCAN-B
 // INT12.1
 interrupt void XINT3_ISR(void)  // External Interrupt
 {
+    // Insert ISR Code here
 
-  // Insert ISR Code here
-//	Data_Type = (GpioDataRegs.GPBDAT.all &0x70000000)>>28;
-//	switch(Data_Type)
-//	{
-//	case 0:
-//		FK_Dat  =  *(Uint16*)(0x100000);
-//		break;
-//	case 1:
-//		IMU_Dat = *(Uint16*)(0x100001);
-//		IMU_State_Machine(IMU_Dat);
-//		break;
-//	case 2:
-//		DY_Dat  =  *(Uint16*)(0x100002);
-//		break;
-//	case 3:
-//		Power_Dat =  *(Uint16*)(0x100003);
-//		Power_State_Machine(Power_Dat);
-//		break;
-//	case 4:
-//		ARINC_Dat_H =  *(Uint16*)(0x100004);
-//		ARINC_Dat_L =  *(Uint16*)(0x100005);
-//		ARINC_Data  =  (Uint32)((ARINC_Dat_H<<16)|ARINC_Dat_L);
-//		ARINC_Decode(ARINC_Data,&m_fly_mis_Messege);
-//		break;
-//
-//	default:
-//		break;
-//	}
-  // To receive more interrupts from this PIE group, acknowledge this interrupt
-   PieCtrlRegs.PIEACK.all = PIEACK_GROUP12;
+    // To receive more interrupts from this PIE group, acknowledge this interrupt
+    // PieCtrlRegs.PIEACK.all = PIEACK_GROUP12;
+
+    // Next two lines for debug only to halt the processor here
+    // Remove after inserting ISR Code
+    asm ("      ESTOP0");
+    for(;;);
 }
 
 // INT12.2
