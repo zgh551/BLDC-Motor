@@ -6,7 +6,9 @@ extern Uint16 RamfuncsLoadEnd;
 extern Uint16 RamfuncsRunStart;
 extern Uint16 RamfuncsLoadSize;
 
-float test1 = 0, test2;
+static Uint16 cnt_500ms = 0;
+
+__interrupt void time0_isr(void);
 
 int main(void) {
     // Step 1. Initialize System Control:
@@ -52,6 +54,10 @@ int main(void) {
     InitFlash();
     #endif
 
+    // ISR functions found within this file.
+    EALLOW;  // This is needed to write to EALLOW protected registers
+    PieVectTable.TINT0 = &time0_isr;
+    EDIS;   // This is needed to disable write to EALLOW protected registers
     // Step 4. Initialize the Device Peripheral.
     //-Timer1 initialize
     InitCpuTimers();
@@ -75,6 +81,7 @@ int main(void) {
     //-SCI Module Initialize for 422
     Steering_SCIB_Init();
 
+    ExternalInterruptInit();
     // Step 5. User specific code, enable interrupts:
     //-Initialize the variable
     StateMachine_Init(); // state machine initial
@@ -83,13 +90,14 @@ int main(void) {
     AD2S1210_Init();
 
     //-System Check
+    SelfCheck();
 
     // To ensure precise timing, use write-only instructions to write to the entire register. Therefore, if any
     // of the configuration bits are changed in ConfigCpuTimer and InitCpuTimers (in DSP2833x_CpuTimers.h), the
     // below settings must also be updated.
     CpuTimer0Regs.TCR.all = 0x4000; // Use write-only instruction to set TSS bit = 0
 
-
+    PieCtrlRegs.PIEIER1.bit.INTx4 = 1;
     // Enable ADCINT in PIE
     PieCtrlRegs.PIEIER1.bit.INTx6 = 1;
     // Enable TINT0 in the PIE: Group 1 interrupt 7
@@ -106,6 +114,23 @@ int main(void) {
     // Step 6. IDLE loop. Just sit and loop forever (optional):
     while(1)
     {
+        if (0xAABB == TelemetrySendFlag)
+        {
+//            BLDC_TelemetrySend();
+            BLDC_CycleSend500ms();
+            TelemetrySendFlag = 0;
+        }
+        if (0xABCD == Time5msSendFlag)
+        {
+//            BLDC_TreePhaseCurrent();
+            Time5msSendFlag = 0;
+        }
+        if (0x1234 == TimeDQCurrentSendFlag)
+        {
+//            BLDC_FeedbackCurrent();
+            TimeDQCurrentSendFlag = 0;
+        }
+
         if (SELFCHECK == m2d_Messege.Commond)
         {
             BLDC_SelfCheck();
@@ -130,41 +155,31 @@ int main(void) {
         {
         // do nothing
         }
-
-        if (0xAABB == TelemetrySendFlag)
-        {
-//            BLDC_TelemetrySend();
-            BLDC_CycleSend500ms();
-            TelemetrySendFlag = 0;
-        }
-        if (0xABCD == Time5msSendFlag)
-        {
-            BLDC_TreePhaseCurrent();
-            Time5msSendFlag = 0;
-        }
-
     }
 }
-//            AD2S1210_ConfigModeWrite(CONTROL, 0x12);
-//            AD2S1210_SampleUpdate();
-//            Fault = AD2S1210_ConfigModeRead(FAULT);
-//            Fault = AD2S1210_DataRead(&Position, &Velocity);
-//            Steering_Send_Byte_B(Position >> 8);
-//            Steering_Send_Byte_B(Position);
-//            Steering_Send_Byte_B(Velocity >> 8);
-//            Steering_Send_Byte_B(Velocity);
-//            Steering_Send_Byte_B(Fault);
-//            Steering_Send_Byte_B(AD2S1210_Dos());
-//            Steering_Send_Byte_B(AD2S1210_Lot());
-//            Steering_Send_Byte_B(AD2S1210_Dir());
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(LOS_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_OVER_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_MISM_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_REST_MAX_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_REST_MIN_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(LOT_HIGH_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(LOT_LOW_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(EXCITATION_FREQUENCY));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(CONTROL));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(FAULT));
-//            Fault = AD2S1210_ResultRead(&d2m_Messege.MotorRotatePosition, &d2m_Messege.MotorAngularVelocity);
+
+
+__interrupt void time0_isr(void)
+{
+    // Insert ISR Code here
+//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlPosition(d2m_Messege.ControlPhaseState);
+
+    cnt_500ms = (cnt_500ms + 1) % 100;
+    if(0 == cnt_500ms)
+    {
+        LedRunning();
+        TelemetrySendFlag = 0xAABB;
+    }
+    else if(1 == cnt_500ms)
+    {
+        Time5msSendFlag = 0xABCD;
+    }
+    else if(2 == cnt_500ms)
+    {
+        TimeDQCurrentSendFlag = 0x1234;
+    }
+// To receive more interrupts from this PIE group, acknowledge this interrupt
+    PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
+}
