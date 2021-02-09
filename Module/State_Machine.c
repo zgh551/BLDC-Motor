@@ -551,6 +551,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
                 target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05; // 两次的时间间隔 (s)
                 CurrentTurnCount   = m2d_Messege.RotateTurns [CurrentTurnIndex];// r/s 旋转圈数/s
                 rotate_turn_cnt    = 0;
+                d2m_Messege.V_q    = -6;
                 BLDC_RotateState   = Running;
             }
             else
@@ -572,8 +573,15 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
                 if((last_phase != phase) && (phase == 1))
                 {
                     rotate_turn_cnt++;
+                    if(d2m_Messege.V_q < -16.0f)
+                    {
+                        d2m_Messege.V_q = -16.0f;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 1.0f;
+                    }
                 }
-                d2m_Messege.V_q = 5;
             }
             break;
 

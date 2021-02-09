@@ -122,7 +122,7 @@ int main(void) {
         }
         if (0xABCD == Time5msSendFlag)
         {
-//            BLDC_TreePhaseCurrent();
+            BLDC_TreePhaseCurrent();
             Time5msSendFlag = 0;
         }
         if (0x1234 == TimeDQCurrentSendFlag)
@@ -166,7 +166,7 @@ __interrupt void time0_isr(void)
 //    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
 //    BLDC_RotateTurnControlPosition(d2m_Messege.ControlPhaseState);
 
-    cnt_500ms = (cnt_500ms + 1) % 100;
+    cnt_500ms = (cnt_500ms + 1) % 10;
     if(0 == cnt_500ms)
     {
         LedRunning();
