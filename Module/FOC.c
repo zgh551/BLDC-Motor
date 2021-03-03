@@ -10,6 +10,10 @@
 
 #pragma CODE_SECTION(SVPWM, "ramfuncs");
 
+//#pragma DATA_SECTION(temp_a, "DMARAML7");
+//#pragma DATA_SECTION(temp_b, "DMARAML7");
+//#pragma DATA_SECTION(temp_c, "DMARAML7");
+
 #define INVER_SQRT_TREE (0.57735026918962576450914878050196) // 1/sqrt(3)
 #define TWO_SQRT_TREE   (0.86602540378443864676372317075294) // sqrt(3)/2
 #define SQRT_TREE       (1.7320508075688772935274463415059)  // sqrt(3)
@@ -19,50 +23,99 @@
 
 #define K_SVPWM         (SQRT_TREE * T_SAMPLE * V_DC)        // sqrt(3) * T_s / U_dc
 
+
+//static float temp_a[500], temp_b[500], temp_c[500];
+static Uint16 temp_cnt = 0;
+
 void CurrentProcess(float *ia, float *ib, float *ic, Uint16 step)
 {
     switch(step)
     {
     case 1:
-        // a > 0
-        *ic = *ib - *ia;
-        *ib = -*ib;
+        // a < 0
+        *ia = -*ib - *ic;
         break;
 
     case 2:
         // b > 0
-        *ic = *ia - *ib;
-        *ia = -*ia;
+        *ia = -*ib - *ic;
         break;
 
     case 3:
         // b > 0
-        *ia = *ic - *ib;
-        *ic = -*ic;
+        *ic = -*ia - *ib;
         break;
 
     case 4:
         // c > 0
-        *ia = *ib - *ic;
-        *ib = -*ib;
+        *ic = *ib = -*ia * 0.5f;
         break;
 
     case 5:
         // c > 0
-        *ib = *ia - *ic;
-        *ia = -*ia;
+//        *ib = -*ib;
+//        *ia = -*ia;
+        *ic = *ib = -*ia * 0.5f;
+
+//        temp_a[temp_cnt] = *ia;
+//        temp_b[temp_cnt] = *ib;
+//        temp_c[temp_cnt] = *ic;
+        temp_cnt = (temp_cnt + 1) % 500;
         break;
 
     case 6:
         // a > 0
-        *ib = *ic - *ia;
-        *ic = -*ic;
+        *ic = *ia = -*ib * 0.5f;
+
+
         break;
 
     default:
 
         break;
     }
+//    switch(step)
+//    {
+//    case 1:
+//        // a > 0
+//        *ic = *ib - *ia;
+//        *ib = -*ib;
+//        break;
+//
+//    case 2:
+//        // b > 0
+//        *ic = *ia - *ib;
+//        *ia = -*ia;
+//        break;
+//
+//    case 3:
+//        // b > 0
+//        *ia = *ic - *ib;
+//        *ic = -*ic;
+//        break;
+//
+//    case 4:
+//        // c > 0
+//        *ia = *ib - *ic;
+//        *ib = -*ib;
+//        break;
+//
+//    case 5:
+//        // c > 0
+//        *ib = *ia - *ic;
+//        *ia = -*ia;
+//        break;
+//
+//    case 6:
+//        // a > 0
+//        *ib = *ic - *ia;
+//        *ic = -*ic;
+//        break;
+//
+//    default:
+//
+//        break;
+//    }
 }
 
 void ClarkTransform(float ia, float ib, float ic, float* i_alpha, float* i_beta)

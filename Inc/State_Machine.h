@@ -67,14 +67,21 @@ typedef struct _Driver2MasterMessege
 	Uint16 MotorCheck;				// 电机自检故障码
 	Uint16 SoftwareVersion_L;		// 驱动板软件版本号 low
 	Uint16 SoftwareVersion_H;		// 驱动板软件版本号 high
-
-	Uint16 MotorStatus;             // 电机状态参数
+    union{
+        Uint16 all;
+        struct{
+            Uint16 revert1 : 5;
+            Uint16 MotorDirection : 2;// 电机方向状态参数
+            Uint16 WorkStatus : 1;// 电机工作状态参数
+            Uint16 revert2 : 8;
+        }bit;
+    }MotorStatus;// 电机状态参数
 	float MotorDriverVoltage;     	// 电机驱动电压
 	float MotorDriverCurrent;    	// 电机驱动电流
 
 	// 遥测上报数据包
-	Uint16 MotorTargetPosition;		// 电机目标位置
-	Uint16 MotorActualPosition;		// 电机实际转动位置
+	float MotorTargetPosition;		// 电机目标位置
+	float MotorActualPosition;		// 电机实际转动位置
 	Uint16 ActualRotationRings;		// 本组电机实际旋转圈数
 	Uint16 ThrowStatus;        		// 投放状态
 
@@ -98,6 +105,7 @@ typedef struct _Driver2MasterMessege
     float V_alpha;                      //
     float V_beta;
 	// AD2S1210
+    float TotalAngularPosition;     // 角度位置 累计和信息 [0, 360]deg
 	float AngularPosition;          // 角度位置 信息 [0, 360]deg
 	float AngularVelocity;          // 角速度信息 rps
 	Uint16 FaultState;              // AD2S1210错误状态
@@ -149,6 +157,7 @@ void BLDC_TelemetrySend(void);
  * @brief the tree phase current send
  */
 void BLDC_TreePhaseCurrent(void);
+void BLDC_TreePhaseCurrentTest(float a, float b, float c);
 
 /*
  * @brief the current feedback

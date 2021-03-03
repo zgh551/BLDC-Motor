@@ -10,6 +10,11 @@
 
 #include "include.h"
 
+//extern float CurrentA[500];
+//extern float CurrentB[500];
+//extern float CurrentC[500];
+extern Uint16 update_flag;
+
 void Steering_ADC_Init(void);
 void Steering_ADC_EPwm(void);
 void Steering_ADC_Start(void);

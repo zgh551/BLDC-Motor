@@ -16,18 +16,18 @@
 #define PID_POSITION_KD  0.12 //0.12
 #define PID_POSITION_INTEGRATION_LIMIT    100.0
 
-#define PID_SPEED_KP  2.0 //3.5
-#define PID_SPEED_KI  0.0
+#define PID_SPEED_KP  2.5 //3.5
+#define PID_SPEED_KI  0.01
 #define PID_SPEED_KD  0.0 //0.12
 #define PID_SPEED_INTEGRATION_LIMIT    10.0
 
 #define PID_CURRENT_D_KP  2.0 //3.5
-#define PID_CURRENT_D_KI  0.1
+#define PID_CURRENT_D_KI  0.0
 #define PID_CURRENT_D_KD  0.0 //0.12
 #define PID_CURRENT_D_INTEGRATION_LIMIT    100.0
 
-#define PID_CURRENT_Q_KP  2.0 //3.5
-#define PID_CURRENT_Q_KI  0.1
+#define PID_CURRENT_Q_KP  0.0 //3.5
+#define PID_CURRENT_Q_KI  0.0
 #define PID_CURRENT_Q_KD  0.0 //0.12
 #define PID_CURRENT_Q_INTEGRATION_LIMIT    100.0
 

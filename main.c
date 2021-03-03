@@ -1,5 +1,7 @@
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
 #include "include.h"
+
+
 // These are defined by the linker (see F28335.cmd)
 extern Uint16 RamfuncsLoadStart;
 extern Uint16 RamfuncsLoadEnd;
@@ -7,10 +9,33 @@ extern Uint16 RamfuncsRunStart;
 extern Uint16 RamfuncsLoadSize;
 
 static Uint16 cnt_500ms = 0;
+//#define TERMINAL_DEBUG
 
 __interrupt void time0_isr(void);
 
+void PowerUpReset(void)
+{
+    Uint16 Temp_WD = 0;
+    if((SysCtrlRegs.WDCR & 0x80) == 0)//如果是上电复位
+    {
+        EALLOW;
+        Temp_WD = SysCtrlRegs.SCSR;
+        SysCtrlRegs.SCSR = (Temp_WD & 0xFE);//启动看门狗复位
+        SysCtrlRegs.WDCR = 0x00B8;
+        EDIS;
+    }
+    else
+    {
+        EALLOW;
+        SysCtrlRegs.WDCR = 0x00E8;//关闭看门狗
+        EDIS;
+    }
+}
+
+
 int main(void) {
+
+    PowerUpReset();
     // Step 1. Initialize System Control:
     InitSysCtrl();
 
@@ -116,20 +141,33 @@ int main(void) {
     {
         if (0xAABB == TelemetrySendFlag)
         {
-//            BLDC_TelemetrySend();
-            BLDC_CycleSend500ms();
+            BLDC_TelemetrySend();
             TelemetrySendFlag = 0;
         }
+
         if (0xABCD == Time5msSendFlag)
         {
-            BLDC_TreePhaseCurrent();
+            BLDC_CycleSend500ms();
             Time5msSendFlag = 0;
         }
+
+        #ifdef TERMINAL_DEBUG
         if (0x1234 == TimeDQCurrentSendFlag)
         {
+            BLDC_TreePhaseCurrent();
 //            BLDC_FeedbackCurrent();
+//            if (0x1234 == update_flag)
+//            {
+//                BLDC_TreePhaseCurrentTest(CurrentA[cnt_current], CurrentB[cnt_current], CurrentC[cnt_current]);
+//                cnt_current = (cnt_current + 1) % 500;
+//                if (0 == cnt_current)
+//                {
+//                    update_flag = 0xABCD;
+//                }
+//            }
             TimeDQCurrentSendFlag = 0;
         }
+        #endif
 
         if (SELFCHECK == m2d_Messege.Commond)
         {
@@ -165,20 +203,20 @@ __interrupt void time0_isr(void)
 //    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
 //    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
 //    BLDC_RotateTurnControlPosition(d2m_Messege.ControlPhaseState);
-
+    #ifdef TERMINAL_DEBUG
     cnt_500ms = (cnt_500ms + 1) % 10;
+    if(1 == cnt_500ms)
+    {
+        TimeDQCurrentSendFlag = 0x1234;
+    }
+    #else
+    cnt_500ms = (cnt_500ms + 1) % 100;
+    #endif
+
     if(0 == cnt_500ms)
     {
         LedRunning();
-        TelemetrySendFlag = 0xAABB;
-    }
-    else if(1 == cnt_500ms)
-    {
         Time5msSendFlag = 0xABCD;
-    }
-    else if(2 == cnt_500ms)
-    {
-        TimeDQCurrentSendFlag = 0x1234;
     }
 // To receive more interrupts from this PIE group, acknowledge this interrupt
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;

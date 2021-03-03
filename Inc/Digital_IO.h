@@ -46,5 +46,7 @@ Uint16 AD2S1210_ConfigModeRead(Uint16 add);
 
 Uint16 AD2S1210_DataRead(Uint16* pos, Uint16* vel);
 
+Uint16 AD2S1210_DataReadSpeed(Uint16* vel);
+
 Uint16 AD2S1210_ResultRead(float* pos, float* vel);
 #endif /* STEERINGENGINE_28335_V4_INC_DIGITAL_IO_H_ */

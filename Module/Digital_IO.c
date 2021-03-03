@@ -121,7 +121,7 @@ void AD2S1210_Init(void)
 //    AD2S1210_ConfigModeWrite(EXCITATION_FREQUENCY, 0x18); // 6khz
 
     // LOS Threshold
-    AD2S1210_ConfigModeWrite(LOS_THRESHOLD, 0x30); // 1.1 v
+//    AD2S1210_ConfigModeWrite(LOS_THRESHOLD, 0x34); // 1.1 v
 
     // DOS mism Threshold
 //    AD2S1210_ConfigModeWrite(DOS_MISM_THRESHOLD, 0x12); // 0.684 v
@@ -154,6 +154,20 @@ Uint16 AD2S1210_ConfigModeRead(Uint16 add)
     return *(Uint16*)(0x200003);
 }
 
+Uint16 AD2S1210_DataReadSpeed(Uint16* vel)
+{
+    Uint16 temp_h;
+    AD2S1210_SampleUpdate();
+
+    temp_h = AD2S1210_ConfigModeRead(VELOCITY_H);
+    *vel  = (temp_h << 8) | (AD2S1210_ConfigModeRead(VELOCITY_L) & 0xff);
+    DELAY_US(WR_DELAY_TIME);
+
+    DELAY_US(WR_DELAY_TIME);
+    *(Uint16*)(0x200003) = FAULT;
+    return *(Uint16*)(0x200003);
+}
+
 Uint16 AD2S1210_DataRead(Uint16* pos, Uint16* vel)
 {
     AD2S1210_SampleUpdate();
@@ -175,13 +189,13 @@ Uint16 AD2S1210_ResultRead(float* pos, float* vel)
     AD2S1210_SampleUpdate();
 
     temp_data_u16 = *(Uint16*)(0x200000);
-//    *pos  = (temp_data_u16 >> 4) * 0.08833 * DEG2RAD; // 5.3 / 60 [deg: 0 - 360] 10bit
+//    *pos  = (temp_data_u16 >> 4) * 0.08833 * DEG2RAD; // 5.3 / 60 [deg: 0 - 360] 12bit
     *pos  = temp_data_u16 * 0.005 * DEG2RAD; // 0.3 / 60 [deg: 0 - 360] 16bit
 
     DELAY_US(WR_DELAY_TIME);
 
-    temp_data_i16 = *(int16*)(0x200002);
-//    *vel  = (temp_data_i16 >> 4) * 0.488; //rps 10bit
+    temp_data_i16 = *(int16*)(0x200001);
+//    *vel  = (temp_data_i16 >> 4) * 0.488; //rps 12bit
     *vel  = temp_data_i16 * 0.004; //rps 16bit
 
     DELAY_US(WR_DELAY_TIME);

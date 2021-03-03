@@ -143,7 +143,6 @@ void ePWM3_LowLevelDutyTime(float time) // us
     {
         EPwm3Regs.CMPA.half.CMPA = temp_value; // adjust duty for output EPWM3A
     }
-
 }
 
 
