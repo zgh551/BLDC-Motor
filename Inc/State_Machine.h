@@ -175,6 +175,8 @@ void BLDC_RotateTurnControl(Uint16 phase);
 //基于圈数支持多包
 void BLDC_RotateTurnControlPro(Uint16 phase);
 
+void BLDC_RotateTurnControlProMax(Uint16 phase);
+
 // 基于位置控制旋转圈数
 void BLDC_RotateTurnControlPosition(Uint16 phase);
 

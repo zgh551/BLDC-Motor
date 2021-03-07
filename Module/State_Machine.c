@@ -22,7 +22,7 @@
 #define TWO_PI          (6.283185307179586476925286766559)
 #define ONE_PI          (3.1415926535897932384626433832795)
 
-#define MAX_VQ          (10.0f)
+#define MAX_VQ          (14.0f)
 
 //define the Power RX state
 typedef enum {
@@ -91,9 +91,10 @@ static float reset_target_angle_position, reset_total_turn_count;
 static float current_angle_rate = 0.0f, current_angle = 0.0f;
 static float rote_time_count = 0.0f, wait_time_count = 0.0f;
 static float target_rote_time     = 0.0f, target_wait_time = 0.0f;
-static float init_angle_position,target_angle_position, total_turn_count_sum;
+static float origin_init_angle_position = 0, init_angle_position,target_angle_position, total_turn_count_sum;
 static float last_angle;
 static float current_turn_count;
+int16 turn_direction_symbol = 0;
 
 //static float temp_angle[100];
 //Uint16  temp_angle_count = 0;
@@ -600,6 +601,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
                 init_angle_position = d2m_Messege.AngularPosition;
                 CurrentTurnIndex = 0;
                 total_sum_rotate_turn_cnt = 0;
+                turn_direction_symbol = 1;
                 m2d_Messege.Commond = 0;
                 d2m_Messege.MotorStatus.bit.WorkStatus = 1;
                 d2m_Messege.MotorTargetPosition = 0.0f;
@@ -612,9 +614,10 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             else if (m2d_Messege.Commond == RESET)
             {
                 BLDC_Start();
-                rotate_turn_cnt = 0;
+                total_sum_rotate_turn_cnt = 0;
+                turn_direction_symbol = -1;
                 m2d_Messege.Commond = 0;
-                d2m_Messege.V_q = -5;
+                d2m_Messege.V_q = -5.0f;
                 init_angle_position = d2m_Messege.AngularPosition;
                 hight_turn_count = floorf(m2d_Messege.HighSpeedReverseNumber * 1.875f);
                 reset_target_angle_position = modff((m2d_Messege.LowSpeedReverseNumber + m2d_Messege.HighSpeedReverseNumber) * 1.875f
@@ -622,6 +625,9 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
 
                 reset_target_angle_position = TWO_PI - reset_target_angle_position;
                 lower_turn_count = (Uint16)reset_total_turn_count;
+
+                d2m_Messege.MotorTargetPosition = (m2d_Messege.LowSpeedReverseNumber + m2d_Messege.HighSpeedReverseNumber) * 1.875f * 360.0f;
+
                 BLDC_RotateState = HightReset;
             }
             else
@@ -642,7 +648,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
                 CurrentTurnCount = (Uint16)total_turn_count_sum;
                 rotate_turn_cnt    = 0;
                 d2m_Messege.V_d    = 0;
-                d2m_Messege.V_q    = 6;
+                d2m_Messege.V_q    = 5.0;
                 BLDC_Start();
                 BLDC_RotateState   = AcceleratePhase;//Running;
             }
@@ -684,7 +690,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
                     }
                     else
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q + 2.0f;
+                        d2m_Messege.V_q = d2m_Messege.V_q + 1.0f;
                     }
                 }
             }
@@ -823,38 +829,10 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
 
                 }
             }
-
             if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
             {
                 rotate_turn_cnt++;
                 total_sum_rotate_turn_cnt++;
-            }
-            break;
-
-        case Running:
-            if (rotate_turn_cnt > CurrentTurnCount)
-            {
-                CurrentTurnIndex++;
-                wait_time_count = 0;
-                d2m_Messege.V_q = 0;
-                BLDC_RotateState = WaitTime;
-            }
-            else
-            {
-//                if((last_phase != phase) && (phase == 1))
-                if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
-                {
-                    rotate_turn_cnt++;
-                    total_sum_rotate_turn_cnt++;
-                    if(d2m_Messege.V_q > 16.0f)
-                    {
-                        d2m_Messege.V_q = 16.0f;
-                    }
-                    else
-                    {
-                        d2m_Messege.V_q = d2m_Messege.V_q + 1.0f;
-                    }
-                }
             }
             break;
 
@@ -870,7 +848,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             break;
 
         case HightReset:
-            if (rotate_turn_cnt >= hight_turn_count)
+            if (total_sum_rotate_turn_cnt >= hight_turn_count)
             {
                 BLDC_RotateState = LowReset;
             }
@@ -878,8 +856,8 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             {
                 if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
                 {
-                    rotate_turn_cnt++;
-                    if(d2m_Messege.V_q < -MAX_VQ)
+                    total_sum_rotate_turn_cnt++;
+                    if(d2m_Messege.V_q < -(MAX_VQ - 1.0e-6f))
                     {
                         d2m_Messege.V_q = -MAX_VQ;
                     }
@@ -892,7 +870,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             break;
 
         case LowReset:
-            if (rotate_turn_cnt >= lower_turn_count)
+            if (total_sum_rotate_turn_cnt >= lower_turn_count)
             {
                 BLDC_RotateState = LowResetStop;
             }
@@ -900,9 +878,10 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             {
                 if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
                 {
-                    rotate_turn_cnt++;
-                    if(d2m_Messege.V_q > -5.0f)
+                    total_sum_rotate_turn_cnt++;
+                    if(d2m_Messege.V_q > -(4.0f + 1.0e-6f))
                     {
+                        d2m_Messege.V_q = -4.0f;
                         BLDC_RotateState = LowResetUniformPhase;
                     }
                     else
@@ -914,7 +893,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             break;
 
         case LowResetUniformPhase:
-            if (rotate_turn_cnt >= lower_turn_count)
+            if (total_sum_rotate_turn_cnt >= lower_turn_count)
             {
                 BLDC_RotateState = LowResetStop;
             }
@@ -922,7 +901,7 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             {
                 if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
                 {
-                    rotate_turn_cnt++;
+                    total_sum_rotate_turn_cnt++;
                     d2m_Messege.V_q = -4.0f;
                 }
             }
@@ -936,15 +915,34 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
             }
             else
             {
-                d2m_Messege.V_q =  -4;
+                stage_phase = fmodf(TWO_PI + d2m_Messege.AngularPosition - reset_target_angle_position, 1.02f);
+                if (stage_phase < 2.0f)
+                {
+                    d2m_Messege.V_q =  -2.5f;
+                }
+                else
+                {
+                    d2m_Messege.V_q =  -3.5f;
+                }
+            }
+            if (d2m_Messege.AngularVelocity > -0.1f)
+            {
+                d2m_Messege.V_d = 0;
+                d2m_Messege.V_q = 0;
+                TelemetrySendFlag = 0xAABB;
+                BLDC_RotateState = WaitStop;
+            }
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                total_sum_rotate_turn_cnt++;
             }
             break;
 
         case WaitLowResetStop:
-            if ((d2m_Messege.AngularVelocity < -1.0f)  && (d2m_Messege.AngularPosition < reset_target_angle_position))
+            if ((d2m_Messege.AngularVelocity < -1.0f)  && (d2m_Messege.AngularPosition > reset_target_angle_position))
             {
                 d2m_Messege.V_d =  0;
-                d2m_Messege.V_q =  2;
+                d2m_Messege.V_q =  1;
             }
             else
             {
@@ -952,6 +950,10 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
                 d2m_Messege.V_q = 0;
                 TelemetrySendFlag = 0xAABB;
                 BLDC_RotateState = WaitStop;
+            }
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                total_sum_rotate_turn_cnt++;
             }
             break;
 
@@ -964,7 +966,480 @@ void BLDC_RotateTurnControlPro(Uint16 phase)
 
             break;
     }
-    d2m_Messege.MotorActualPosition = (total_sum_rotate_turn_cnt * TWO_PI + d2m_Messege.AngularPosition - init_angle_position) * 57.3f;
+    d2m_Messege.MotorActualPosition = (total_sum_rotate_turn_cnt * TWO_PI + turn_direction_symbol * (d2m_Messege.AngularPosition - init_angle_position)) * 57.3f;
+    last_angle = d2m_Messege.AngularPosition;
+}
+
+//基于圈数
+void BLDC_RotateTurnControlProMax(Uint16 phase)
+{
+    int16 i;
+    switch(BLDC_RotateState)
+    {
+        case WaitStart:
+            if (m2d_Messege.Commond == DELIVERRY)
+            {
+                TotalTurnCount      = m2d_Messege.MotorRotateCount;
+                origin_init_angle_position = d2m_Messege.AngularPosition;
+                CurrentTurnIndex = 0;
+                total_sum_rotate_turn_cnt = 0;
+                turn_direction_symbol = 1;
+                m2d_Messege.Commond = 0;
+                d2m_Messege.MotorStatus.bit.WorkStatus = 1;
+                d2m_Messege.MotorTargetPosition = 0.0f;
+                for (i = 0; i < TotalTurnCount; i++)
+                {
+                    d2m_Messege.MotorTargetPosition += m2d_Messege.RotateTurns[i] * 1.875f * 360.0f;
+                }
+                BLDC_RotateState = TotalTurns;
+            }
+            else if (m2d_Messege.Commond == RESET)
+            {
+                BLDC_Start();
+                total_sum_rotate_turn_cnt = 0;
+                turn_direction_symbol = -1;
+                m2d_Messege.Commond = 0;
+                d2m_Messege.V_q = -5.0f;
+                origin_init_angle_position = d2m_Messege.AngularPosition;
+                hight_turn_count = floorf(m2d_Messege.HighSpeedReverseNumber * 1.875f);
+                reset_target_angle_position = modff((m2d_Messege.LowSpeedReverseNumber + m2d_Messege.HighSpeedReverseNumber) * 1.875f
+                                                   + (1.0f - origin_init_angle_position * TWO_PI_INV), &reset_total_turn_count) * TWO_PI;
+
+                reset_target_angle_position = TWO_PI - reset_target_angle_position;
+                lower_turn_count = (Uint16)reset_total_turn_count;
+
+                d2m_Messege.MotorTargetPosition = (m2d_Messege.LowSpeedReverseNumber + m2d_Messege.HighSpeedReverseNumber) * 1.875f * 360.0f;
+
+                BLDC_RotateState = HightReset;
+            }
+            else
+            {
+                d2m_Messege.MotorStatus.bit.WorkStatus = 0;
+                BLDC_Stop();
+            }
+            break;
+
+        case TotalTurns:
+            if (CurrentTurnIndex < TotalTurnCount)
+            {
+//                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01; // 旋转总运行时间(s)
+                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05; // 两次的时间间隔 (s)
+//                CurrentTurnCount   = m2d_Messege.RotateTurns [CurrentTurnIndex];// r/s 旋转圈数/s
+                current_turn_count = m2d_Messege.RotateTurns[CurrentTurnIndex] * 1.875f;// r/s 旋转圈数/s
+                init_angle_position = d2m_Messege.AngularPosition;
+                target_angle_position = modff(current_turn_count + init_angle_position * TWO_PI_INV, &total_turn_count_sum) * TWO_PI;
+                CurrentTurnCount = (Uint16)total_turn_count_sum;
+                rotate_turn_cnt    = 0;
+                d2m_Messege.V_d    = 0;
+                d2m_Messege.V_q    = 6.0;//5
+                BLDC_Start();
+                BLDC_RotateState   = AcceleratePhase;//Running;
+            }
+            else
+            {
+                BLDC_RotateState = WaitStop;
+            }
+            break;
+
+        case AcceleratePhase:
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                rotate_turn_cnt++;
+                total_sum_rotate_turn_cnt++;
+                if ((CurrentTurnCount - rotate_turn_cnt) <= 4)
+                {
+                    if (1 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 4.0f;
+                        BLDC_RotateState = DeceleratePhase;
+                    }
+                    else if (2 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 1.0f;
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else if (3 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 4.5f;
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else if (5 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 3.5f;
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else if (8 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else if (9 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 3.5f;
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 2.0f;
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                }
+                else
+                {
+                    if(d2m_Messege.V_q > (MAX_VQ - 1.0e-6f))
+                    {
+                        d2m_Messege.V_q = MAX_VQ;
+                        BLDC_RotateState = UniformPhase;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 2.0f;
+                    }
+                }
+            }
+            break;
+
+        case SmallTurnDeceleratePhase:
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                rotate_turn_cnt++;
+                total_sum_rotate_turn_cnt++;
+                if (rotate_turn_cnt >= CurrentTurnCount)
+                {
+                    if (CurrentTurnCount == 2)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
+                    }
+                    BLDC_RotateState = DeceleratePhase;
+                }
+                else
+                {
+                    if (CurrentTurnCount == 9) // 5
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.5f;
+                    }
+                    else if (CurrentTurnCount == 8) // 4
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.3f;
+                    }
+                    else if (CurrentTurnCount == 7) // 4
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
+                    }
+                    else if (CurrentTurnCount == 6) // 3
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 1.75f;
+                    }
+                    else if (CurrentTurnCount == 5) // 3
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 0.75f;
+                    }
+                    else if (CurrentTurnCount == 4) // 2
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 1.5f;
+                    }
+                    else if (CurrentTurnCount == 3) // 2
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 3.5f;
+                    }
+                    else if (CurrentTurnCount == 2)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
+                    }
+                    else
+                    {
+
+                    }
+                }
+            }
+            break;
+
+        case UniformPhase:
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                rotate_turn_cnt++;
+                total_sum_rotate_turn_cnt++;
+                if (rotate_turn_cnt >= CurrentTurnCount)
+                {
+                    d2m_Messege.V_q = 5.5f;
+                    BLDC_RotateState = DeceleratePhase;
+                }
+                else
+                {
+                    if (CurrentTurnCount >= 20)
+                    {
+                        if ((CurrentTurnCount - rotate_turn_cnt) <= 5)
+                        {
+                            d2m_Messege.V_q = d2m_Messege.V_q - 2.25f;
+                        }
+                        else
+                        {
+                            d2m_Messege.V_q = MAX_VQ;
+                        }
+                    }
+                    else
+                    {
+                        if ((CurrentTurnCount - rotate_turn_cnt) <= 4)
+                        {
+                            d2m_Messege.V_q = d2m_Messege.V_q - 3.0f;
+                        }
+                        else
+                        {
+                            d2m_Messege.V_q = MAX_VQ;
+                        }
+                    }
+
+                }
+            }
+            break;
+
+        case DeceleratePhase:
+            if (d2m_Messege.AngularPosition > target_angle_position)
+            {
+                d2m_Messege.V_q = 0.0f;
+                BLDC_RotateState = DecelerateStopPhase;
+            }
+            else
+            {
+                if (d2m_Messege.AngularVelocity < 1.0e-3f)
+                {
+                    d2m_Messege.V_q =  0.0f;
+                    BLDC_RotateState = DecelerateStopPhase;
+                }
+                else
+                {
+//                    d2m_Messege.V_q =  0.0f;
+                    stage_phase = fmodf(TWO_PI + d2m_Messege.AngularPosition - target_angle_position, 1.02f);
+//                    if (CurrentTurnCount >= 20)
+//                    {
+//                        if (stage_phase > 5.0f)
+//                        {
+//                            d2m_Messege.V_q =  5.5f;
+//                        }
+//                        else if(stage_phase > 4.0f)
+//                        {
+//                            d2m_Messege.V_q =  5.5f;
+//                        }
+//                        else if(stage_phase > 3.0f)
+//                        {
+//                            d2m_Messege.V_q =  4.0f;
+//                        }
+//                        else
+//                        {
+//                            d2m_Messege.V_q =  3.0f;
+//                        }
+//                    }
+//                    else
+                    {
+                        if (stage_phase > 5.0f)
+                        {
+                            d2m_Messege.V_q =  5.5f;
+                        }
+                        else if(stage_phase > 4.0f)
+                        {
+                            d2m_Messege.V_q =  5.5f;
+                        }
+                        else if(stage_phase > 3.0f)
+                        {
+                            d2m_Messege.V_q =  4.0f;
+                        }
+                        else
+                        {
+                            d2m_Messege.V_q =  3.0f;
+                        }
+                    }
+//                    if (stage_phase > 5.0f)
+//                    {
+//                        d2m_Messege.V_q =  4.0f;
+//                    }
+//                    else if(stage_phase > 4.0f)
+//                    {
+//                        d2m_Messege.V_q =  3.5f;
+//                    }
+//                    else if(stage_phase > 3.0f)
+//                    {
+//                        d2m_Messege.V_q =  3.0f;
+//                    }
+//                    else
+//                    {
+//                        d2m_Messege.V_q =  2.0f;
+//                    }
+                }
+            }
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                rotate_turn_cnt++;
+                total_sum_rotate_turn_cnt++;
+                d2m_Messege.V_q = 0.0f;
+                BLDC_RotateState = DecelerateStopPhase;
+            }
+            break;
+
+        case DecelerateStopPhase:
+            if (d2m_Messege.AngularVelocity > 2.0f)
+            {
+                d2m_Messege.V_d = 0;
+                d2m_Messege.V_q = 0.0f;
+            }
+            else
+            {
+                d2m_Messege.V_d = 0;
+                d2m_Messege.V_q = 0;
+                if (d2m_Messege.AngularVelocity < 1.0e-3f)
+                {
+                    CurrentTurnIndex++;
+                    wait_time_count = 0;
+                    TelemetrySendFlag = 0xAABB;
+                    if(CurrentTurnIndex >= TotalTurnCount)
+                    {
+                        BLDC_RotateState = WaitStop;
+                    }
+                    else
+                    {
+                        BLDC_RotateState = WaitTime;
+                    }
+                }
+            }
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                rotate_turn_cnt++;
+                total_sum_rotate_turn_cnt++;
+            }
+            break;
+
+        case WaitTime:
+            if (wait_time_count > target_wait_time)
+            {
+                BLDC_RotateState = TotalTurns;
+            }
+            else
+            {
+                BLDC_Stop();
+                wait_time_count += 0.0001f;
+            }
+            break;
+
+        case HightReset:
+            if (total_sum_rotate_turn_cnt >= hight_turn_count)
+            {
+                BLDC_RotateState = LowReset;
+            }
+            else
+            {
+                if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+                {
+                    total_sum_rotate_turn_cnt++;
+                    if(d2m_Messege.V_q < -(MAX_VQ - 1.0e-6f))
+                    {
+                        d2m_Messege.V_q = -MAX_VQ;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
+                    }
+                }
+            }
+            break;
+
+        case LowReset:
+            if (total_sum_rotate_turn_cnt >= lower_turn_count)
+            {
+                BLDC_RotateState = LowResetStop;
+            }
+            else
+            {
+                if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+                {
+                    total_sum_rotate_turn_cnt++;
+                    if(d2m_Messege.V_q > -(5.0f + 1.0e-6f))
+                    {
+                        d2m_Messege.V_q = -5.0f;
+                        BLDC_RotateState = LowResetUniformPhase;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 2.0f;
+                    }
+                }
+            }
+            break;
+
+        case LowResetUniformPhase:
+            if (total_sum_rotate_turn_cnt >= lower_turn_count)
+            {
+                BLDC_RotateState = LowResetStop;
+            }
+            else
+            {
+                if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+                {
+                    total_sum_rotate_turn_cnt++;
+                    d2m_Messege.V_q = -5.0f;
+                }
+            }
+            break;
+
+        case LowResetStop:
+            if (d2m_Messege.AngularPosition < reset_target_angle_position)  // before 30 deg
+            {
+                d2m_Messege.V_q = 0.0f;
+                BLDC_RotateState = WaitLowResetStop;
+            }
+            else
+            {
+                d2m_Messege.V_q = -5.0f;
+//                stage_phase = fmodf(TWO_PI + d2m_Messege.AngularPosition - reset_target_angle_position, 1.02f);
+//                if (stage_phase < 2.0f)
+//                {
+//                    d2m_Messege.V_q =  -5.0f;
+//                }
+//                else
+//                {
+//                    d2m_Messege.V_q =  -4.8f;
+//                }
+            }
+            if (d2m_Messege.AngularVelocity > -0.1f)
+            {
+                d2m_Messege.V_d = 0;
+                d2m_Messege.V_q = 0;
+                TelemetrySendFlag = 0xAABB;
+                BLDC_RotateState = WaitStop;
+            }
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                total_sum_rotate_turn_cnt++;
+            }
+            break;
+
+        case WaitLowResetStop:
+            if ((d2m_Messege.AngularVelocity < -1.0f)  && (d2m_Messege.AngularPosition > reset_target_angle_position))
+            {
+                d2m_Messege.V_d =  0;
+                d2m_Messege.V_q =  1;
+            }
+            else
+            {
+                d2m_Messege.V_d = 0;
+                d2m_Messege.V_q = 0;
+                TelemetrySendFlag = 0xAABB;
+                BLDC_RotateState = WaitStop;
+            }
+            if (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            {
+                total_sum_rotate_turn_cnt++;
+            }
+            break;
+
+        case WaitStop:
+            BLDC_Stop();
+            BLDC_RotateState = WaitStart;
+            break;
+
+        default:
+
+            break;
+    }
+    d2m_Messege.MotorActualPosition = (total_sum_rotate_turn_cnt * TWO_PI + turn_direction_symbol * (d2m_Messege.AngularPosition - origin_init_angle_position)) * 57.3f;
     last_angle = d2m_Messege.AngularPosition;
 }
 

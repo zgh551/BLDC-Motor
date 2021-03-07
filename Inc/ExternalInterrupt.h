@@ -10,6 +10,7 @@
 
 #include "include.h"
 
+extern Uint16 CurrentOverLoad;
 void ExternalInterruptInit(void);
 
 #endif /* STEERINGENGINE_28335_V3_INC_EXTERNALINTERRUPT_H_ */

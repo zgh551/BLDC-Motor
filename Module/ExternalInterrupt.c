@@ -11,6 +11,8 @@ __interrupt void xint1_isr(void);
 
 //static float over_a, over_b, over_c;
 
+Uint16 CurrentOverLoad = 0;
+
 void ExternalInterruptInit(void)
 {
 
@@ -48,8 +50,7 @@ void ExternalInterruptInit(void)
 __interrupt void xint1_isr(void)
 {
     // Insert ISR Code here
-    BLDC_Stop();
-    LedErr();
+    CurrentOverLoad = 0xABCD;
     // To receive more interrupts from this PIE group, acknowledge this interrupt
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
