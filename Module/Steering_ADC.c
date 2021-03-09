@@ -205,7 +205,8 @@ __interrupt void  adc_isr(void)
 //    last_angle = d2m_Messege.AngularPosition;
 //    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
 //    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
-    BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
+   //  BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
+    BLDC_RotateTurnControlProMaxReset(d2m_Messege.ControlPhaseState);
     // Reinitialize for next ADC sequence
     AdcRegs.ADCTRL2.bit.RST_SEQ1   = 1;         // Reset SEQ1
     AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
