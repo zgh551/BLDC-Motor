@@ -1,7 +1,7 @@
 /*
  * Control.c
  *
- *  Created on: 2016��3��1��
+ *  Created on: 2021
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
@@ -55,21 +55,3 @@ void CurrentQ_ControllerPID(float i_desired, float i_actual, float *i_out)
     pidSetDesired(&PID_Current_Q, i_desired);
     *i_out = pidUpdate(&PID_Current_Q, i_actual, 1);
 }
-
-//Get the position PID output
-//void controllerGetActuatorPositionOutput(int16 *Position)
-//{
-//	*Position = PositionOutput;
-//}
-
-//void controllerCorrectCurrentPID(float CurrentActual,float CurrentDesired,int16 *CurrentOutput)
-//{
-//	pidSetDesired(&PID_Current, CurrentDesired);
-//	TRUNCATE_SINT16(*CurrentOutput, pidUpdate(&PID_Current, CurrentActual, 1));
-//}
-
-//Get the Current PID output
-//void controllerGetActuatorCurrentOutput(int16 *Current)
-//{
-//	*Current = CurrentOutput;
-//}

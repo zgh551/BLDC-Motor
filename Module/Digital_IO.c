@@ -1,7 +1,7 @@
 /*
  * Digital_IO.c
  *
- *  Created on: 2016��6��3��
+ *  Created on: 2021
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File

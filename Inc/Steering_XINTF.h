@@ -1,12 +1,12 @@
 /*
  * Steering_XINTF.h
  *
- *  Created on: 2016Äê3ÔÂ30ÈÕ
+ *  Created on: 2016ï¿½ï¿½3ï¿½ï¿½30ï¿½ï¿½
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V3_INC_STEERING_XINTF_H_
-#define STEERINGENGINE_28335_V3_INC_STEERING_XINTF_H_
+#ifndef _INC_STEERING_XINTF_H_
+#define _INC_STEERING_XINTF_H_
 
 #include "include.h"
 

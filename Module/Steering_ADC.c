@@ -1,7 +1,7 @@
 /*
  * Steering_ADC.c
  *
- *  Created on: 2016��3��3��
+ *  Created on: 2021
  *      Author: ZGH
  *      Version:V1.0.0
  */
@@ -175,17 +175,6 @@ __interrupt void  adc_isr(void)
 
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
-
-//    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
-//
-//    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,
-//                   &d2m_Messege.I_alpha, &d2m_Messege.I_beta);
-//
-//    ParkTransform(d2m_Messege.I_alpha, d2m_Messege.I_beta, d2m_Messege.AngularPosition,
-//                  &d2m_Messege.I_d, &d2m_Messege.I_q);
-//
-//    CurrentD_ControllerPID(0, d2m_Messege.I_d, &d2m_Messege.V_d);
-//    CurrentQ_ControllerPID(3, d2m_Messege.I_q, &d2m_Messege.V_q);
 
     d2m_Messege.V_d = m2d_Messege.TargetVd;
     d2m_Messege.V_q = m2d_Messege.TargetVq;

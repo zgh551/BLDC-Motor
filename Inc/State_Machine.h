@@ -1,24 +1,14 @@
 /*
  * State_Machine.h
  *
- *  Created on: 2016��4��23��
+ *  Created on: 2021
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_
-#define STEERINGENGINE_28335_V3_INC_STATE_MACHINE_H_
+#ifndef _INC_STATE_MACHINE_H_
+#define _INC_STATE_MACHINE_H_
 
 #include "include.h"
-
- #define LM_COMMOND_BIT 					8
- #define LM_LOCK_BIT  						16
- #define LM_POWER_BIT 						17
- #define LM_LAUCH_BIT 						18
-
- #define LM_COMMOND_MASK 					0xff
- #define LM_LOCK_MASK  						0x01
- #define LM_LAUCH_MASK 						0x01
- #define LM_POWER_MASK 						0x01
 
 #define SELFCHECK 		(1) // 自检
 #define DELIVERRY 		(2) // 投放

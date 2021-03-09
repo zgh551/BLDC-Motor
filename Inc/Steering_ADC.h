@@ -1,12 +1,12 @@
 /*
  * Steering_ADC.h
  *
- *  Created on: 2016Äê3ÔÂ3ÈÕ
+ *  Created on: 2021
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V3_INC_STEERING_ADC_H_
-#define STEERINGENGINE_28335_V3_INC_STEERING_ADC_H_
+#ifndef _INC_STEERING_ADC_H_
+#define _STEERING_ADC_H_
 
 #include "include.h"
 

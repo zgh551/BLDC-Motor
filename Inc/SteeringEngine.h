@@ -5,8 +5,8 @@
  *      Author: ZGH
  */
 
-#ifndef STEERINGENGINE_28335_V3_INC_STEERINGENGINE_H_
-#define STEERINGENGINE_28335_V3_INC_STEERINGENGINE_H_
+#ifndef _INC_STEERINGENGINE_H_
+#define _INC_STEERINGENGINE_H_
 
 #include "include.h"
 

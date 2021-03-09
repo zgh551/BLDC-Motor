@@ -139,32 +139,8 @@ int main(void) {
         }
         if (0xABCD == Time5msSendFlag)
         {
-            BLDC_TreePhaseCurrent();
+//            BLDC_TreePhaseCurrent();
             Time5msSendFlag = 0;
         }
-
     }
 }
-//            AD2S1210_ConfigModeWrite(CONTROL, 0x12);
-//            AD2S1210_SampleUpdate();
-//            Fault = AD2S1210_ConfigModeRead(FAULT);
-//            Fault = AD2S1210_DataRead(&Position, &Velocity);
-//            Steering_Send_Byte_B(Position >> 8);
-//            Steering_Send_Byte_B(Position);
-//            Steering_Send_Byte_B(Velocity >> 8);
-//            Steering_Send_Byte_B(Velocity);
-//            Steering_Send_Byte_B(Fault);
-//            Steering_Send_Byte_B(AD2S1210_Dos());
-//            Steering_Send_Byte_B(AD2S1210_Lot());
-//            Steering_Send_Byte_B(AD2S1210_Dir());
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(LOS_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_OVER_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_MISM_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_REST_MAX_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(DOS_REST_MIN_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(LOT_HIGH_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(LOT_LOW_THRESHOLD));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(EXCITATION_FREQUENCY));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(CONTROL));
-//            Steering_Send_Byte_B(AD2S1210_ConfigModeRead(FAULT));
-//            Fault = AD2S1210_ResultRead(&d2m_Messege.MotorRotatePosition, &d2m_Messege.MotorAngularVelocity);

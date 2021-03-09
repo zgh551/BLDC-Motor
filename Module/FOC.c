@@ -19,65 +19,6 @@
 
 #define K_SVPWM         (SQRT_TREE * T_SAMPLE * V_DC)        // sqrt(3) * T_s / U_dc
 
-void CurrentProcess(float *ia, float *ib, float *ic, Uint16 step)
-{
-    switch(step)
-    {
-    case 1:
-        // a > 0
-        *ic = *ib - *ia;
-        *ib = -*ib;
-        break;
-
-    case 2:
-        // b > 0
-        *ic = *ia - *ib;
-        *ia = -*ia;
-        break;
-
-    case 3:
-        // b > 0
-        *ia = *ic - *ib;
-        *ic = -*ic;
-        break;
-
-    case 4:
-        // c > 0
-        *ia = *ib - *ic;
-        *ib = -*ib;
-        break;
-
-    case 5:
-        // c > 0
-        *ib = *ia - *ic;
-        *ia = -*ia;
-        break;
-
-    case 6:
-        // a > 0
-        *ib = *ic - *ia;
-        *ic = -*ic;
-        break;
-
-    default:
-
-        break;
-    }
-}
-
-void ClarkTransform(float ia, float ib, float ic, float* i_alpha, float* i_beta)
-{
-    *i_alpha = ia;
-    *i_beta  = INVER_SQRT_TREE * ia + 2 * INVER_SQRT_TREE * ib;
-}
-
-
-void ParkTransform(float i_alpha, float i_beta, float theta, float* i_d, float* i_q)
-{
-    *i_d =  i_alpha * cos(theta) + i_beta * sin(theta);
-    *i_q = -i_alpha * sin(theta) + i_beta * cos(theta);
-}
-
 
 void InverseParkTransform(float v_d, float v_q, float theta, float* v_alpha, float* v_beta)
 {

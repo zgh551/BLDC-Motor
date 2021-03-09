@@ -11,20 +11,17 @@ GEN_CMDS__FLAG :=
 
 ORDERED_OBJS += \
 "./main.obj" \
-"./Module/CRC.obj" \
 "./Module/Control.obj" \
 "./Module/Digital_IO.obj" \
 "./Module/ExternalInterrupt.obj" \
 "./Module/FOC.obj" \
 "./Module/Led.obj" \
 "./Module/PID.obj" \
-"./Module/Relay.obj" \
 "./Module/SelfCheck.obj" \
 "./Module/State_Machine.obj" \
 "./Module/SteeringEngine.obj" \
 "./Module/Steering_ADC.obj" \
 "./Module/Steering_SCI.obj" \
-"./Module/Steering_SPI.obj" \
 "./Module/Steering_XINTF.obj" \
 "./Src/DSP2833x_ADC_cal.obj" \
 "./Src/DSP2833x_Adc.obj" \
@@ -193,8 +190,8 @@ BLDC_Motor.hex: $(EXE_OUTPUTS)
 # Other Targets
 clean:
 	-$(RM) $(BIN_OUTPUTS__QUOTED)$(EXE_OUTPUTS__QUOTED)
-	-$(RM) "main.obj" "Module\CRC.obj" "Module\Control.obj" "Module\Digital_IO.obj" "Module\ExternalInterrupt.obj" "Module\FOC.obj" "Module\Led.obj" "Module\PID.obj" "Module\Relay.obj" "Module\SelfCheck.obj" "Module\State_Machine.obj" "Module\SteeringEngine.obj" "Module\Steering_ADC.obj" "Module\Steering_SCI.obj" "Module\Steering_SPI.obj" "Module\Steering_XINTF.obj" "Src\DSP2833x_ADC_cal.obj" "Src\DSP2833x_Adc.obj" "Src\DSP2833x_CodeStartBranch.obj" "Src\DSP2833x_CpuTimers.obj" "Src\DSP2833x_DMA.obj" "Src\DSP2833x_DefaultIsr.obj" "Src\DSP2833x_EPwm.obj" "Src\DSP2833x_GlobalVariableDefs.obj" "Src\DSP2833x_Gpio.obj" "Src\DSP2833x_MemCopy.obj" "Src\DSP2833x_PieCtrl.obj" "Src\DSP2833x_PieVect.obj" "Src\DSP2833x_Sci.obj" "Src\DSP2833x_Spi.obj" "Src\DSP2833x_SysCtrl.obj" "Src\DSP2833x_Xintf.obj" "Src\DSP2833x_usDelay.obj" 
-	-$(RM) "main.d" "Module\CRC.d" "Module\Control.d" "Module\Digital_IO.d" "Module\ExternalInterrupt.d" "Module\FOC.d" "Module\Led.d" "Module\PID.d" "Module\Relay.d" "Module\SelfCheck.d" "Module\State_Machine.d" "Module\SteeringEngine.d" "Module\Steering_ADC.d" "Module\Steering_SCI.d" "Module\Steering_SPI.d" "Module\Steering_XINTF.d" "Src\DSP2833x_Adc.d" "Src\DSP2833x_CpuTimers.d" "Src\DSP2833x_DMA.d" "Src\DSP2833x_DefaultIsr.d" "Src\DSP2833x_EPwm.d" "Src\DSP2833x_GlobalVariableDefs.d" "Src\DSP2833x_Gpio.d" "Src\DSP2833x_MemCopy.d" "Src\DSP2833x_PieCtrl.d" "Src\DSP2833x_PieVect.d" "Src\DSP2833x_Sci.d" "Src\DSP2833x_Spi.d" "Src\DSP2833x_SysCtrl.d" "Src\DSP2833x_Xintf.d" 
+	-$(RM) "main.obj" "Module\Control.obj" "Module\Digital_IO.obj" "Module\ExternalInterrupt.obj" "Module\FOC.obj" "Module\Led.obj" "Module\PID.obj" "Module\SelfCheck.obj" "Module\State_Machine.obj" "Module\SteeringEngine.obj" "Module\Steering_ADC.obj" "Module\Steering_SCI.obj" "Module\Steering_XINTF.obj" "Src\DSP2833x_ADC_cal.obj" "Src\DSP2833x_Adc.obj" "Src\DSP2833x_CodeStartBranch.obj" "Src\DSP2833x_CpuTimers.obj" "Src\DSP2833x_DMA.obj" "Src\DSP2833x_DefaultIsr.obj" "Src\DSP2833x_EPwm.obj" "Src\DSP2833x_GlobalVariableDefs.obj" "Src\DSP2833x_Gpio.obj" "Src\DSP2833x_MemCopy.obj" "Src\DSP2833x_PieCtrl.obj" "Src\DSP2833x_PieVect.obj" "Src\DSP2833x_Sci.obj" "Src\DSP2833x_Spi.obj" "Src\DSP2833x_SysCtrl.obj" "Src\DSP2833x_Xintf.obj" "Src\DSP2833x_usDelay.obj" 
+	-$(RM) "main.d" "Module\Control.d" "Module\Digital_IO.d" "Module\ExternalInterrupt.d" "Module\FOC.d" "Module\Led.d" "Module\PID.d" "Module\SelfCheck.d" "Module\State_Machine.d" "Module\SteeringEngine.d" "Module\Steering_ADC.d" "Module\Steering_SCI.d" "Module\Steering_XINTF.d" "Src\DSP2833x_Adc.d" "Src\DSP2833x_CpuTimers.d" "Src\DSP2833x_DMA.d" "Src\DSP2833x_DefaultIsr.d" "Src\DSP2833x_EPwm.d" "Src\DSP2833x_GlobalVariableDefs.d" "Src\DSP2833x_Gpio.d" "Src\DSP2833x_MemCopy.d" "Src\DSP2833x_PieCtrl.d" "Src\DSP2833x_PieVect.d" "Src\DSP2833x_Sci.d" "Src\DSP2833x_Spi.d" "Src\DSP2833x_SysCtrl.d" "Src\DSP2833x_Xintf.d" 
 	-$(RM) "Src\DSP2833x_ADC_cal.d" "Src\DSP2833x_CodeStartBranch.d" "Src\DSP2833x_usDelay.d" 
 	-@echo 'Finished clean'
 	-@echo ' '

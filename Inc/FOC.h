@@ -10,12 +10,6 @@
 
 #include "include.h"
 
-void CurrentProcess(float *ia, float *ib, float *ic, Uint16 step);
-
-void ClarkTransform(float ia, float ib, float ic, float* i_alpha, float* i_beta);
-
-void ParkTransform(float i_alpha, float i_beta, float theta, float* i_d, float* i_q);
-
 void InverseParkTransform(float v_d, float v_q, float theta, float* v_alpha, float* v_beta);
 
 Uint16 SVPWM(float v_alpha, float v_beta);

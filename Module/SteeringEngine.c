@@ -1,7 +1,7 @@
 /*
  * TeeringEngine.c
  *
- *  Created on: 2016��3��4��
+ *  Created on: 2021
  *      Author: ZGH
  *      version:V1.0.0
  */
@@ -130,32 +130,3 @@ void BLDC_Stop()
 {
     BLDC_ShutDown(0);
 }
-
-//int16 limitPosition(int16 value)
-//{
-//	if(value > 1500)
-//	{
-//		value = 1500;
-//	}
-//	else if(value < -1499)
-//	{
-//		value = -1499;
-//	}
-//	return value;
-//}
-
-//void SteeringPowerOutput(int16 PositionPIDOutput)
-//{
-//	if(PositionPIDOutput < 0)
-//	{
-//		ePWM_Duty(1499 + limitPosition(PositionPIDOutput));
-//	}
-//	else if(0 == PositionPIDOutput)
-//	{
-//		ePWM_Duty(1499);
-//	}
-//	else
-//	{
-//		ePWM_Duty(1499 + limitPosition(PositionPIDOutput));
-//	}
-//}

@@ -1,7 +1,7 @@
 /*
  * Led.c
  *
- *  Created on: 2016��4��24��
+ *  Created on: 2021
  *      Author: ZGH
  */
 #include "DSP28x_Project.h"     // Device Headerfile and Examples Include File
