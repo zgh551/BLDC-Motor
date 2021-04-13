@@ -17,7 +17,7 @@
   #define ADC_MODCLK 0x2 // HSPCLK = SYSCLKOUT/2*ADC_MODCLK2 = 100/(2*2)   = 25.0 MHz
 #endif
 #define ADC_CKPS   0x1   // ADC module clock = HSPCLK/2*ADC_CKPS   = 25.0MHz/(1*2) = 12.5MHz
-#define ADC_SHCLK  0xF   // S/H width in ADC module periods                        = 16 ADC clocks
+#define ADC_SHCLK  0x7   // S/H width in ADC module periods                        = 16 ADC clocks
 #define AVG        1000  // Average sample limit
 #define ZOFFSET    0x00  // Average Zero offset
 #define BUF_SIZE   4    // Sample buffer size
@@ -47,12 +47,14 @@ volatile Uint16 *DMASource;
 //static Uint16 first_enter;
 //static Uint16 angle_rate_cnt;
 
-//float CurrentA[500];
-//float CurrentB[500];
-//float CurrentC[500];
+float CurrentA[500];
+float CurrentB[500];
+float CurrentC[500];
 Uint16 index_count;
 Uint16 update_flag;
 
+float last_a, last_b, last_c;
+float last_d, last_q;
 //static float pid_output;
 
 void Steering_ADC_Init(void)
@@ -99,7 +101,7 @@ void Steering_ADC_EPwm(void)
 {
 // Assumes ePWM1 clock is already enabled in InitSysCtrl();
 	EPwm1Regs.ETSEL.bit.SOCAEN  = 1;        				  // Enable SOC on A group
-	EPwm1Regs.ETSEL.bit.SOCASEL = ET_CTR_PRD;     		      // Select SOC from from CTR_PRD on updown_count
+	EPwm1Regs.ETSEL.bit.SOCASEL = ET_CTR_ZERO;     		      // Select SOC from from CTR_PRD on updown_count
 	EPwm1Regs.ETPS.bit.SOCAPRD  = ET_1ST;        			  // Generate pulse on 1st event
 //	EPwm1Regs.CMPA.half.CMPA    = 0x0080; // CPU_FRQ/Sample_Fre/4;	  	  // Set compare A value
 //	EPwm1Regs.TBPRD             = 0xffff; //(CPU_FRQ/Sample_Fre/2 - 1); // Set period for ePWM1; CPU_FRQ/2/5000 - 1;
@@ -182,37 +184,88 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 
 __interrupt void  adc_isr(void)
 {
-    d2m_Messege.MotorDriver_IA = (int16)(AdcMirror.ADCRESULT0 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IB = (int16)(AdcMirror.ADCRESULT1 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IC = (int16)(AdcMirror.ADCRESULT2 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    float pid_output_position;
+    d2m_Messege.MotorDriver_IA = -(int16)(AdcMirror.ADCRESULT0 - 1992) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IB = -(int16)(AdcMirror.ADCRESULT1 - 1980) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IC = -(int16)(AdcMirror.ADCRESULT2 - 2049) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
 
     // update the voltage and current
-    d2m_Messege.MotorDriverVoltage = AdcMirror.ADCRESULT3 * 0.0076171875; // adc / 4096 * 3 * 10.4
-
-
+    d2m_Messege.MotorDriverVoltage = (int16)(AdcMirror.ADCRESULT3 - 4) * 0.0076171875; // adc / 4096 * 3 * 10.4
 
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
 
-//    d2m_Messege.V_d = m2d_Messege.TargetVd;
+//    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
+
+
+//    SpeedControllerPIDParameterSet(m2d_Messege.TargetVd,m2d_Messege.TargetVq);
+// 位置控制
+//    PositionControllerPID(m2d_Messege.TargetPosition, d2m_Messege.AngularPosition, &pid_output_position);
+//    SpeedControllerPID(pid_output_position, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
+// 速度控制
+
+    SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
+    d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -20, 20);
+    d2m_Messege.V_d = 0.01;//m2d_Messege.TargetVd;
 //    d2m_Messege.V_q = m2d_Messege.TargetVq;
+
+//    InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, m2d_Messege.TargetPosition,
+//                         &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
 
     InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, d2m_Messege.AngularPosition,
                          &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
 
     d2m_Messege.ControlPhaseState = SVPWM(d2m_Messege.V_alpha, d2m_Messege.V_beta);
 
-//    last_angle = d2m_Messege.AngularPosition;
 //    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
 //    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
-   //  BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
-    BLDC_RotateTurnControlProMaxReset(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlProMaxReset(d2m_Messege.ControlPhaseState);
+
+    BLDC_RotateTurnControlVelocity(d2m_Messege.ControlPhaseState);
     // Reinitialize for next ADC sequence
     AdcRegs.ADCTRL2.bit.RST_SEQ1   = 1;         // Reset SEQ1
     AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;   // Acknowledge interrupt to PIE
 }
 
+
+
+//    d2m_Messege.MotorDriver_IA = 0.9 * last_a + 0.1 * d2m_Messege.MotorDriver_IA;
+//    d2m_Messege.MotorDriver_IB = 0.9 * last_b + 0.1 * d2m_Messege.MotorDriver_IB;
+//    d2m_Messege.MotorDriver_IC = 0.9 * last_c + 0.1 * d2m_Messege.MotorDriver_IC;
+//
+//    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,
+//                   &d2m_Messege.I_alpha, &d2m_Messege.I_beta);
+//
+//    ParkTransform(d2m_Messege.I_alpha, d2m_Messege.I_beta, d2m_Messege.AngularPosition,
+//                  &d2m_Messege.I_d, &d2m_Messege.I_q);
+//    last_angle = d2m_Messege.AngularPosition;
+//    last_a = d2m_Messege.MotorDriver_IA;
+//    last_b = d2m_Messege.MotorDriver_IB;
+//    last_c = d2m_Messege.MotorDriver_IC;
+// 电流控制
+//    CurrentD_ControllerPID(m2d_Messege.TargetVd, d2m_Messege.I_d, &d2m_Messege.V_d);
+//    CurrentQ_ControllerPID(m2d_Messege.TargetVq, d2m_Messege.I_q, &d2m_Messege.V_q);
+
+//    if (update_flag == 0xABCD)
+//    {
+//        CurrentA[index_count] = d2m_Messege.I_d;
+//        CurrentB[index_count] = d2m_Messege.I_q;
+//
+//        CurrentA[index_count] = d2m_Messege.I_alpha;
+//        CurrentB[index_count] = d2m_Messege.I_beta;
+
+
+//        CurrentA[index_count] = d2m_Messege.MotorDriver_IA;
+//        CurrentB[index_count] = d2m_Messege.MotorDriver_IB;
+//        CurrentC[index_count] = d2m_Messege.MotorDriver_IC;//d2m_Messege.AngularPosition/3.0;//  ; //d2m_Messege.ControlPhaseState/3.0f;//
+//        index_count = (index_count + 1) % 500;
+//        if (index_count == 0)
+//        {
+//            update_flag = 0x1234;
+//        }
+//    }
 // Current Translate
 //    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
 //    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,

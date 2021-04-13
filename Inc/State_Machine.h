@@ -82,6 +82,7 @@ typedef struct _Driver2MasterMessege
 	// 遥测上报数据包
 	float MotorTargetPosition;		// 电机目标位置
 	float MotorActualPosition;		// 电机实际转动位置
+	Uint16 TargetRotationRings;     // 本组电机目标旋转圈数
 	Uint16 ActualRotationRings;		// 本组电机实际旋转圈数
 	Uint16 ThrowStatus;        		// 投放状态
 
@@ -163,7 +164,7 @@ void BLDC_TreePhaseCurrentTest(float a, float b, float c);
  * @brief the current feedback
  */
 void BLDC_FeedbackCurrent(void);
-
+void BLDC_FeedbackCurrentTest(float d, float q);
 
 /**
  * @brief the 422 communication receive function
@@ -178,6 +179,8 @@ void BLDC_RotateTurnControlPro(Uint16 phase);
 void BLDC_RotateTurnControlProMax(Uint16 phase);
 
 void BLDC_RotateTurnControlProMaxReset(Uint16 phase);
+
+void BLDC_RotateTurnControlVelocity(Uint16 phase);
 // 基于位置控制旋转圈数
 void BLDC_RotateTurnControlPosition(Uint16 phase);
 

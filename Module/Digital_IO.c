@@ -121,7 +121,9 @@ void AD2S1210_Init(void)
 //    AD2S1210_ConfigModeWrite(EXCITATION_FREQUENCY, 0x18); // 6khz
 
     // LOS Threshold
-//    AD2S1210_ConfigModeWrite(LOS_THRESHOLD, 0x34); // 1.1 v
+    AD2S1210_ConfigModeWrite(LOS_THRESHOLD, 0x34); // 1.1 v
+
+//    AD2S1210_ConfigModeWrite(DOS_OVER_THRESHOLD, 120);
 
     // DOS mism Threshold
 //    AD2S1210_ConfigModeWrite(DOS_MISM_THRESHOLD, 0x12); // 0.684 v

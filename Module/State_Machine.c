@@ -43,6 +43,7 @@ LowReset,
 LowResetUniformPhase,
 LowResetStop,
 WaitLowResetStop,
+WaitRun,
 Running,
 AcceleratePhase,
 UniformPhase,
@@ -85,15 +86,27 @@ Uint16 rx_commond = 0;
 
 static int16 total_sum_rotate_turn_cnt = 0;
 static Uint16 TotalTurnCount = 0, CurrentTurnIndex = 0, CurrentTurnCount = 0;
-static Uint16 hight_turn_count = 0, lower_turn_count = 0, reset_current_turn_cnt = 0;
+static Uint16 hight_turn_count = 0, lower_turn_count = 0;
 static float reset_target_angle_position, reset_total_turn_count;
 
 static float current_angle_rate = 0.0f, current_angle = 0.0f;
 static float rote_time_count = 0.0f, wait_time_count = 0.0f;
-static float target_rote_time     = 0.0f, target_wait_time = 0.0f;
+
+// 复位相关
+static Uint16 reset_current_turn_cnt = 0;
+static float high_speed_end_position = 0.0f;
+
+// 投放相关
+static float current_turn_count = 0.0f; // 当前投放圈数
+static float target_rote_time = 0.0f;   // 该投放阶段所需总的时间
+static float current_turn_angle_rate = 0.0f;  // 当前投放的角速度
+
+static float target_wait_time = 0.0f;   // 两段投放间隔时间
+
+
 static float origin_init_angle_position = 0, init_angle_position,target_angle_position, total_turn_count_sum;
 static float last_angle;
-static float current_turn_count;
+
 int16 turn_direction_symbol = 0;
 
 //static float temp_angle[100];
@@ -130,6 +143,11 @@ void StateMachine_Init(void)
         m2d_Messege.RotateTimes[i]  = 0; // 旋转总运行时间
         m2d_Messege.TimeInterval[i] = 0; // 两次的时间间隔
     }
+
+    total_sum_rotate_turn_cnt = 0;
+    origin_init_angle_position = d2m_Messege.AngularPosition;
+    d2m_Messege.MotorTargetPosition = 0.0f;
+    m2d_Messege.Commond = 0;
 }
 
 void BLDC_SelfCheck(void)
@@ -149,7 +167,7 @@ void BLDC_SelfCheck(void)
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
 	Steering_Send_Byte_B(Tdata.len);
-	check_sum = 0;
+	check_sum = Tdata.len;
 	for (i = 0; i < Tdata.len; i++)
 	{
 		check_sum += Tdata.data[i];
@@ -174,7 +192,7 @@ void CommandResponse(Uint16 rsp)
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
 	Steering_Send_Byte_B(Tdata.len);
-	check_sum = 0;
+	check_sum = Tdata.len;
 	for (i = 0; i < Tdata.len; i++)
 	{
 		check_sum += Tdata.data[i];
@@ -200,7 +218,7 @@ void BLDC_Delivery(void)
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
 	Steering_Send_Byte_B(Tdata.len);
-	check_sum = 0;
+	check_sum = Tdata.len;
 	for (i = 0; i < Tdata.len; i++)
 	{
 		check_sum += Tdata.data[i];
@@ -226,7 +244,7 @@ void BLDC_Reset(void)
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
 	Steering_Send_Byte_B(Tdata.len);
-	check_sum = 0;
+	check_sum = Tdata.len;
 	for (i = 0; i < Tdata.len; i++)
 	{
 		check_sum += Tdata.data[i];
@@ -247,11 +265,16 @@ void BLDC_CycleSend500ms(void)
 	Tdata.data[1] = d2m_Messege.MotorDriverVoltage * 5 ; // 电机驱动电压
 	d2m_Messege.MotorDriverCurrent = d2m_Messege.MotorDriver_IA + d2m_Messege.MotorDriver_IB + d2m_Messege.MotorDriver_IC;
 	Tdata.data[2] = d2m_Messege.MotorDriverCurrent * 10; // 电机驱动电流
-	temp_data = (Uint16)(d2m_Messege.MotorActualPosition * 0.5f); // 电机旋转位置
+	temp_data = (Uint16)(d2m_Messege.MotorActualPosition * 0.5f); // 电机旋转位置 rad
+//	temp_data = (Uint16)(d2m_Messege.AngularPosition * 0.5f); // 电机旋转位置 rad
 	Tdata.data[3] =  temp_data & 0x00ff; 
 	Tdata.data[4] = (temp_data >> 8) & 0x00ff; 
 
     #ifdef TERMINAL_DEBUG
+//	temp_data = (Uint16)(d2m_Messege.MotorTargetPosition * 0.5f);
+//    Tdata.data[5] =  temp_data & 0x00ff;
+//    Tdata.data[6] = (temp_data >> 8) & 0x00ff; // [-150 - 150] r/s
+
 	temp_data_i16 = (int16)(d2m_Messege.AngularVelocity * 10);
 	Tdata.data[5] =  temp_data_i16 & 0x00ff;
 	Tdata.data[6] = (temp_data_i16 >> 8) & 0x00ff; // [-150 - 150] r/s
@@ -262,12 +285,13 @@ void BLDC_CycleSend500ms(void)
     #endif
 
 	d2m_Messege.MotorStatus.bit.MotorDirection = d2m_Messege.AngularVelocity > 1.0e-2f ? 1 : d2m_Messege.AngularVelocity < -1.0e-2f ? 2 : 0;
-	Tdata.data[7] = d2m_Messege.MotorStatus.all; // 电机状态参数
+//	Tdata.data[7] = d2m_Messege.MotorStatus.all; // 电机状态参数
+	Tdata.data[7] = d2m_Messege.FaultState;
 
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
 	Steering_Send_Byte_B(Tdata.len);
-	check_sum = 0;
+	check_sum = Tdata.len;
 	for (i = 0; i < Tdata.len; i++)
 	{
 		check_sum += Tdata.data[i];
@@ -283,23 +307,24 @@ void BLDC_TelemetrySend(void)
 	Tdata.len = 8;
 	Tdata.data[0] = TELEMETRY_SEND;
 
-	temp_data = (Uint16)d2m_Messege.MotorTargetPosition * 0.5; // 电机目标位置
+	temp_data = (Uint16)d2m_Messege.MotorTargetPosition * 0.5 * 57.3; // 电机目标位置
 	Tdata.data[1] =  temp_data & 0x00ff;  	
 	Tdata.data[2] = (temp_data >> 8) & 0x00ff;
 
-	temp_data = (Uint16)d2m_Messege.MotorActualPosition * 0.5; // 电机实际转动位置
+	temp_data = (Uint16)d2m_Messege.MotorActualPosition * 0.5 * 57.3; // 电机实际转动位置
 	Tdata.data[3] =  temp_data & 0x00ff; 
 	Tdata.data[4] = (temp_data >> 8) & 0x00ff; 
 
-	d2m_Messege.ActualRotationRings = (Uint16)(d2m_Messege.MotorActualPosition/360.0f);
-	Tdata.data[5] = d2m_Messege.ActualRotationRings; // 本组电机实际旋转圈数
-	Tdata.data[6] = d2m_Messege.ThrowStatus;         // 投放状态
-	Tdata.data[7] = 0;
+	d2m_Messege.TargetRotationRings = (Uint16)(d2m_Messege.MotorTargetPosition/TWO_PI);
+	d2m_Messege.ActualRotationRings = (Uint16)(d2m_Messege.MotorActualPosition/TWO_PI);
+	Tdata.data[5] = d2m_Messege.TargetRotationRings; // 目标
+	Tdata.data[6] = d2m_Messege.ActualRotationRings; // 本组电机实际旋转圈数
+	Tdata.data[7] = d2m_Messege.ThrowStatus;         // 投放状态
 
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
 	Steering_Send_Byte_B(Tdata.len);
-	check_sum = 0;
+	check_sum = Tdata.len;
 	for (i = 0; i < Tdata.len; i++)
 	{
 		check_sum += Tdata.data[i];
@@ -328,7 +353,7 @@ void BLDC_TreePhaseCurrent(void)
     Steering_Send_Byte_B(0x55);
     Steering_Send_Byte_B(0x77);
     Steering_Send_Byte_B(Tdata.len);
-    check_sum = 0;
+    check_sum = Tdata.len;
     for (i = 0; i < Tdata.len; i++)
     {
         check_sum += Tdata.data[i];
@@ -357,7 +382,7 @@ void BLDC_TreePhaseCurrentTest(float a, float b, float c)
     Steering_Send_Byte_B(0x55);
     Steering_Send_Byte_B(0x77);
     Steering_Send_Byte_B(Tdata.len);
-    check_sum = 0;
+    check_sum = Tdata.len;
     for (i = 0; i < Tdata.len; i++)
     {
         check_sum += Tdata.data[i];
@@ -388,7 +413,37 @@ void BLDC_FeedbackCurrent(void)
     Steering_Send_Byte_B(0x55);
     Steering_Send_Byte_B(0x77);
     Steering_Send_Byte_B(Tdata.len);
-    check_sum = 0;
+    check_sum = Tdata.len;
+    for (i = 0; i < Tdata.len; i++)
+    {
+        check_sum += Tdata.data[i];
+        Steering_Send_Byte_B(Tdata.data[i]);
+    }
+    Steering_Send_Byte_B(check_sum & 0x00ff);
+}
+
+
+void BLDC_FeedbackCurrentTest(float d, float q)
+{
+    Uint16 i = 0, check_sum = 0;
+    int16 temp_data = 0;
+    Tdata.len = 8;
+    Tdata.data[0] = FEEDBACK_CURRENT;
+    temp_data = (int16)(d * 1000); // D电流
+    Tdata.data[1] =  temp_data       & 0x00ff;
+    Tdata.data[2] = (temp_data >> 8) & 0x00ff;
+    temp_data = (int16)(q * 1000); // Q电流
+    Tdata.data[3] =  temp_data       & 0x00ff;
+    Tdata.data[4] = (temp_data >> 8) & 0x00ff;
+
+    Tdata.data[5] = 0;
+    Tdata.data[6] = 0;
+    Tdata.data[7] = 0;
+
+    Steering_Send_Byte_B(0x55);
+    Steering_Send_Byte_B(0x77);
+    Steering_Send_Byte_B(Tdata.len);
+    check_sum = Tdata.len;
     for (i = 0; i < Tdata.len; i++)
     {
         check_sum += Tdata.data[i];
@@ -414,13 +469,13 @@ void CommunicationStateMachine(Uint16 Receive_Data)
 
 		case Length:
 			Rdata.len      = Receive_Data;
-			Rdata.checksum = 0;
+			Rdata.checksum = Receive_Data;
 			Com422_State   = Commond;
 		break;
 
 		case Commond:
 			dat_cnt         = 1;
-			Rdata.data[0] = Receive_Data;
+			Rdata.data[0]   = Receive_Data;
 			Rdata.cmd       = Receive_Data;
 			Rdata.checksum += Receive_Data;
 			Com422_State    = ReceiveData;
@@ -469,13 +524,13 @@ void CommunicationStateMachine(Uint16 Receive_Data)
                 else if(TARGET_DQ == Rdata.cmd) //目标DQ值
                 {
                     m2d_Messege.Commond = Rdata.data[0];
-                    m2d_Messege.TargetVd = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.001f; //D
-                    m2d_Messege.TargetVq = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.001f; //Q
+                    m2d_Messege.TargetVd = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.01f; //D
+                    m2d_Messege.TargetVq = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.01f; //Q
                 }
                 else if (TARGET_SPEED == Rdata.cmd) // 目标速度和目标角度
                 {
-                    m2d_Messege.TargetAngleVelocity = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.001f; // 目标角速度
-                    m2d_Messege.TargetPosition      = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.001f; // 目标位置
+                    m2d_Messege.TargetAngleVelocity = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.01f; // 目标角速度
+                    m2d_Messege.TargetPosition      = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.01f; // 目标位置
                 }
 				else
 				{
@@ -1500,16 +1555,24 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                     CurrentTurnCount = (Uint16)((d2m_Messege.MotorTargetPosition - d2m_Messege.MotorActualPosition) / 360.f);
                     deliverry_rotate_turn_cnt = 0;
                     d2m_Messege.V_d = 0;
-                    d2m_Messege.V_q = 6.0;//5
                     BLDC_Start();
-                    BLDC_RotateState = AcceleratePhase;//Running;
+                    if (0 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = 7.0;//5
+                        BLDC_RotateState = DeceleratePhase;
+                    }
+                    else
+                    {
+                        d2m_Messege.V_q = 6.0;//5
+                        BLDC_RotateState = AcceleratePhase;//Running;
+                    }
                 }
                 else
                 {
                     CurrentTurnCount = 0;
                     deliverry_rotate_turn_cnt = 0;
                     d2m_Messege.V_d = 0;
-                    d2m_Messege.V_q = 8.0;//5
+                    d2m_Messege.V_q = 7.0;//5
                     BLDC_Start();
                     BLDC_RotateState = DeceleratePhase;
                 }
@@ -1521,8 +1584,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             break;
 
         case AcceleratePhase:
-            if ((last_angle < (origin_init_angle_position - 1.0e-5f))
-            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-5f)))
+            if ((last_angle < (origin_init_angle_position - 1.0e-6f))
+            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-6f)))
             {
                 deliverry_rotate_turn_cnt++;
                 total_sum_rotate_turn_cnt++;
@@ -1530,32 +1593,47 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                 {
                     if (1 == CurrentTurnCount)
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q + 4.0f;
+                        d2m_Messege.V_q = d2m_Messege.V_q + 2.0f;
                         BLDC_RotateState = DeceleratePhase;
                     }
                     else if (2 == CurrentTurnCount)
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q + 1.0f;
+                        d2m_Messege.V_q = d2m_Messege.V_q + 2.0f;// 6 + 2.0 == 8
                         BLDC_RotateState = SmallTurnDeceleratePhase;
                     }
                     else if (3 == CurrentTurnCount)
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q + 4.5f;
+                        d2m_Messege.V_q = d2m_Messege.V_q + 4.0f;// 6 + 4.0 == 10
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else if (4 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 4.0f;// 6 + 4.0 == 10
                         BLDC_RotateState = SmallTurnDeceleratePhase;
                     }
                     else if (5 == CurrentTurnCount)
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q + 3.5f;
+                        d2m_Messege.V_q = d2m_Messege.V_q + 4.0f;// 6 + 4 == 10
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else if (6 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 2.0f; // 8 + 2 == 11
+                        BLDC_RotateState = SmallTurnDeceleratePhase;
+                    }
+                    else if (7 == CurrentTurnCount)
+                    {
+                        d2m_Messege.V_q = d2m_Messege.V_q + 1.0f; // 10 + 1 == 11
                         BLDC_RotateState = SmallTurnDeceleratePhase;
                     }
                     else if (8 == CurrentTurnCount)
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f; // 12 - 2.0 = 10
                         BLDC_RotateState = SmallTurnDeceleratePhase;
                     }
                     else if (9 == CurrentTurnCount)
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 3.5f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 3.2f;// 14 - 3.0 = 11
                         BLDC_RotateState = SmallTurnDeceleratePhase;
                     }
                     else
@@ -1579,13 +1657,14 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             }
             if (fabsf(d2m_Messege.MotorTargetPosition - d2m_Messege.MotorActualPosition) < 360)
             {
+                d2m_Messege.V_q = 5.2f;
                 BLDC_RotateState = DeceleratePhase;
             }
             break;
 
         case SmallTurnDeceleratePhase:
-            if ((last_angle < (origin_init_angle_position - 1.0e-5f))
-            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-5f)))
+            if ((last_angle < (origin_init_angle_position - 1.0e-6f))
+            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-6f)))
             {
                 deliverry_rotate_turn_cnt++;
                 total_sum_rotate_turn_cnt++;
@@ -1601,31 +1680,31 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                 {
                     if (CurrentTurnCount == 9) // 5
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 2.5f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
                     }
                     else if (CurrentTurnCount == 8) // 4
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 2.3f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 1.5f;
                     }
                     else if (CurrentTurnCount == 7) // 4
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 2.0f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 1.2f;
                     }
                     else if (CurrentTurnCount == 6) // 3
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 1.75f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 1.20f;
                     }
                     else if (CurrentTurnCount == 5) // 3
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 0.75f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 1.20f;
                     }
                     else if (CurrentTurnCount == 4) // 2
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 1.5f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 2.4f;
                     }
                     else if (CurrentTurnCount == 3) // 2
                     {
-                        d2m_Messege.V_q = d2m_Messege.V_q - 3.5f;
+                        d2m_Messege.V_q = d2m_Messege.V_q - 3.0f;
                     }
                     else if (CurrentTurnCount == 2)
                     {
@@ -1639,19 +1718,20 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             }
             if (fabsf(d2m_Messege.MotorTargetPosition - d2m_Messege.MotorActualPosition) < 360)
             {
+                d2m_Messege.V_q = 5.2f;
                 BLDC_RotateState = DeceleratePhase;
             }
             break;
 
         case UniformPhase:
-            if ((last_angle < (origin_init_angle_position - 1.0e-5f))
-            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-5f)))
+            if ((last_angle < (origin_init_angle_position - 1.0e-6f))
+            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-6f)))
             {
                 deliverry_rotate_turn_cnt++;
                 total_sum_rotate_turn_cnt++;
                 if (deliverry_rotate_turn_cnt >= CurrentTurnCount)
                 {
-                    d2m_Messege.V_q = 5.5f;
+                    d2m_Messege.V_q = 5.2f;
                     BLDC_RotateState = DeceleratePhase;
                 }
                 else
@@ -1660,7 +1740,7 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                     {
                         if ((CurrentTurnCount - deliverry_rotate_turn_cnt) <= 5)
                         {
-                            d2m_Messege.V_q = d2m_Messege.V_q - 2.5f;// 2.25 -> 2.5
+                            d2m_Messege.V_q = d2m_Messege.V_q - 1.8f;// 2.25 -> 2.5
                         }
                         else
                         {
@@ -1671,7 +1751,7 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                     {
                         if ((CurrentTurnCount - deliverry_rotate_turn_cnt) <= 4)
                         {
-                            d2m_Messege.V_q = d2m_Messege.V_q - 3.0f;
+                            d2m_Messege.V_q = d2m_Messege.V_q - 2.4f;
                         }
                         else
                         {
@@ -1705,7 +1785,7 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                     }
                     else if(stage_phase > 240.0f)
                     {
-                        d2m_Messege.V_q =  5.5f;
+                        d2m_Messege.V_q =  4.5f;
                     }
                     else if(stage_phase > 180.0f)
                     {
@@ -1718,8 +1798,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                 }
             }
 
-            if ((last_angle < (origin_init_angle_position - 1.0e-5f))
-            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-5f)))
+            if ((last_angle < (origin_init_angle_position - 1.0e-6f))
+            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-6f)))
             {
                 deliverry_rotate_turn_cnt++;
                 total_sum_rotate_turn_cnt++;
@@ -1729,10 +1809,10 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             break;
 
         case DecelerateStopPhase:
-            if (d2m_Messege.AngularVelocity > 2.0f)
+            if (d2m_Messege.AngularVelocity > 1.0f)
             {
                 d2m_Messege.V_d = 0;
-                d2m_Messege.V_q = 0.0f;
+                d2m_Messege.V_q = -1.0f;
             }
             else
             {
@@ -1745,6 +1825,7 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                     TelemetrySendFlag = 0xAABB;
                     if(CurrentTurnIndex >= TotalTurnCount)
                     {
+                        BLDC_Stop();
                         BLDC_RotateState = WaitStop;
                     }
                     else
@@ -1754,8 +1835,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                 }
             }
 
-            if ((last_angle < (origin_init_angle_position - 1.0e-5f))
-            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-5f)))
+            if ((last_angle < (origin_init_angle_position - 1.0e-6f))
+            &&  (d2m_Messege.AngularPosition > (origin_init_angle_position + 1.0e-6f)))
             {
                 deliverry_rotate_turn_cnt++;
                 total_sum_rotate_turn_cnt++;
@@ -1781,8 +1862,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             }
             else
             {
-                if ((last_angle > (origin_init_angle_position + 1.0e-5f))
-                &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-5f)))
+                if ((last_angle > (origin_init_angle_position + 1.0e-6f))
+                &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-6f)))
                 {
                     ++reset_current_turn_cnt;
                     --total_sum_rotate_turn_cnt;
@@ -1805,8 +1886,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             }
             else
             {
-                if ((last_angle > (origin_init_angle_position + 1.0e-5f))
-                &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-5f)))
+                if ((last_angle > (origin_init_angle_position + 1.0e-6f))
+                &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-6f)))
                 {
                     ++reset_current_turn_cnt;
                     --total_sum_rotate_turn_cnt;
@@ -1838,8 +1919,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             }
             else
             {
-                if ((last_angle > (origin_init_angle_position + 1.0e-5f))
-                &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-5f)))
+                if ((last_angle > (origin_init_angle_position + 1.0e-6f))
+                &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-6f)))
                 {
                     ++reset_current_turn_cnt;
                     --total_sum_rotate_turn_cnt;
@@ -1857,7 +1938,9 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             break;
 
         case LowResetStop:
-            if (d2m_Messege.AngularPosition < reset_target_angle_position)  // before 30 deg
+            if ((d2m_Messege.AngularPosition < reset_target_angle_position)
+            ||  (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI)
+            ||  (reset_current_turn_cnt > lower_turn_count))  // before 30 deg
             {
                 d2m_Messege.V_q = 0.0f;
                 BLDC_RotateState = WaitLowResetStop;
@@ -1876,8 +1959,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                 TelemetrySendFlag = 0xAABB;
                 BLDC_RotateState = WaitStop;
             }
-            if ((last_angle > (origin_init_angle_position + 1.0e-5f))
-            &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-5f)))
+            if ((last_angle > (origin_init_angle_position + 1.0e-6f))
+            &&  (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-6f)))
             {
                 ++reset_current_turn_cnt;
                 --total_sum_rotate_turn_cnt;
@@ -1893,7 +1976,7 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
             break;
 
         case WaitLowResetStop:
-            if ((d2m_Messege.AngularVelocity < -1.0f)  && (d2m_Messege.AngularPosition > reset_target_angle_position))
+            if (d2m_Messege.AngularVelocity < -0.2f)
             {
                 d2m_Messege.V_d =  0;
                 d2m_Messege.V_q =  1;
@@ -1908,8 +1991,8 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
                 TelemetrySendFlag = 0xAABB;
                 BLDC_RotateState = WaitStop;
             }
-            if ((last_angle > (origin_init_angle_position + 1.0e-5f))
-            && (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-5f)))
+            if ((last_angle > (origin_init_angle_position + 1.0e-6f))
+            && (d2m_Messege.AngularPosition < (origin_init_angle_position - 1.0e-6f)))
             {
                 ++reset_current_turn_cnt;
                 --total_sum_rotate_turn_cnt;
@@ -1935,11 +2018,175 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
     
     d2m_Messege.MotorActualPosition = (total_sum_rotate_turn_cnt * TWO_PI
                                     + ( d2m_Messege.AngularPosition - origin_init_angle_position)
-                                    + ((d2m_Messege.AngularPosition > origin_init_angle_position) ? TWO_PI : 0)
+                                    + (fabs(d2m_Messege.AngularPosition - last_angle) > ONE_PI ? TWO_PI : 0)
                                     * turn_direction_symbol) * 57.3f;
     last_angle = d2m_Messege.AngularPosition;
 }
 
+
+void BLDC_RotateTurnControlVelocity(Uint16 phase)
+{
+    float delta_theta = d2m_Messege.AngularPosition - last_angle;
+    delta_theta = (delta_theta < -ONE_PI) ? (delta_theta + TWO_PI)
+                : (delta_theta >  ONE_PI) ? (delta_theta - TWO_PI)
+                :  delta_theta;
+
+    d2m_Messege.MotorActualPosition += delta_theta;
+
+    switch(BLDC_RotateState)
+    {
+        case WaitStart:
+            if (m2d_Messege.Commond == DELIVERRY)
+            {
+                CurrentTurnIndex = 0;
+                TotalTurnCount   = m2d_Messege.MotorRotateCount;
+                d2m_Messege.MotorStatus.bit.WorkStatus = 1;
+                m2d_Messege.Commond = 0;
+                BLDC_RotateState = TotalTurns;
+            }
+            else if (m2d_Messege.Commond == RESET)
+            {
+                BLDC_Start();
+                d2m_Messege.MotorTargetPosition = 0.0f;
+                d2m_Messege.MotorActualPosition = (m2d_Messege.LowSpeedReverseNumber + m2d_Messege.HighSpeedReverseNumber) * 1.875f * TWO_PI;//更新实际位置
+                high_speed_end_position         =  m2d_Messege.LowSpeedReverseNumber * 1.875f * TWO_PI;//更新高速结束段位置
+                m2d_Messege.Commond = 0;
+                BLDC_RotateState = HightReset;
+            }
+            else if (m2d_Messege.Commond == APROXMT_ZERO)
+            {
+                m2d_Messege.Commond = 0;
+            }
+            else
+            {
+                d2m_Messege.MotorStatus.bit.WorkStatus = 0;
+                BLDC_Stop();
+            }
+            break;
+
+        case TotalTurns:
+            if (CurrentTurnIndex < TotalTurnCount)
+            {
+                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;   // 两次的时间间隔 (s)
+                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;   // 旋转总运行时间(s)
+                current_turn_count = m2d_Messege.RotateTurns [CurrentTurnIndex] * 1.875f; // r/s 旋转圈数/s
+                current_turn_angle_rate = current_turn_count / target_rote_time;
+                d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
+                BLDC_Start();
+                BLDC_RotateState = WaitRun;
+            }
+            else
+            {
+                BLDC_RotateState = WaitStop;
+            }
+            break;
+
+        case WaitRun:
+            if (fabs(d2m_Messege.AngularVelocity) > 10)
+            {
+                BLDC_RotateState = Running;
+            }
+            else
+            {
+                m2d_Messege.TargetAngleVelocity = current_turn_angle_rate;
+            }
+            break;
+
+        case Running:
+            if (fabs(d2m_Messege.AngularVelocity) > 1.0e-1f)
+            {
+                PositionControllerPID(d2m_Messege.MotorTargetPosition, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
+                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -current_turn_angle_rate, current_turn_angle_rate);
+            }
+            else
+            {
+                m2d_Messege.TargetAngleVelocity = 0;
+                CurrentTurnIndex++;
+                wait_time_count = 0;
+                if(CurrentTurnIndex >= TotalTurnCount)
+                {
+                    BLDC_Stop();
+                    BLDC_RotateState = WaitStop;
+                }
+                else
+                {
+                    TelemetrySendFlag = 0xAABB;
+                    BLDC_RotateState = WaitTime;
+                }
+            }
+            break;
+
+        case WaitTime:
+            if (wait_time_count > target_wait_time)
+            {
+                BLDC_RotateState = TotalTurns;
+            }
+            else
+            {
+                BLDC_Stop();
+                wait_time_count += 0.0001f;
+            }
+            break;
+
+        case HightReset:
+            if (d2m_Messege.MotorActualPosition < high_speed_end_position)
+            {
+                BLDC_RotateState = LowReset;
+            }
+            else
+            {
+                m2d_Messege.TargetAngleVelocity = -50;
+            }
+            break;
+
+        case LowReset:
+            if (d2m_Messege.MotorActualPosition < 0)
+            {
+                m2d_Messege.TargetAngleVelocity = 0;
+                BLDC_RotateState = WaitLowResetStop;
+            }
+            else
+            {
+                m2d_Messege.TargetAngleVelocity = -10;
+            }
+            // 近似零位处理
+            if (m2d_Messege.Commond == APROXMT_ZERO)
+            {
+                m2d_Messege.Commond = 0;
+            }
+            break;
+
+        case WaitLowResetStop:
+            if (fabs(d2m_Messege.AngularVelocity) > 1.0e-3f)
+            {
+//                PositionControllerPID(d2m_Messege.MotorTargetPosition, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
+//                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -10, 10);
+            }
+            else
+            {
+                m2d_Messege.TargetAngleVelocity = 0;
+                d2m_Messege.MotorTargetPosition = 0.0f;
+                BLDC_RotateState = WaitStop;
+            }
+            if (m2d_Messege.Commond == APROXMT_ZERO)
+            {
+                d2m_Messege.MotorTargetPosition = 0.0f;
+                m2d_Messege.Commond = 0;
+            }
+            break;
+
+        case WaitStop:
+            TelemetrySendFlag = 0xAABB;
+            BLDC_Stop();
+            BLDC_RotateState = WaitStart;
+            break;
+
+        default:
+
+            break;
+    }
+    last_angle = d2m_Messege.AngularPosition;
+}
 // 基于位置控制旋转圈数
 void BLDC_RotateTurnControlPosition(Uint16 phase)
 {

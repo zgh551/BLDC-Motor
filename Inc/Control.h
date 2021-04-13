@@ -11,28 +11,28 @@
 #include "include.h"
 
 //position control pid
-#define PID_POSITION_KP  4.2 //3.5
+#define PID_POSITION_KP  4.0 //3.5
 #define PID_POSITION_KI  0.05
-#define PID_POSITION_KD  0.12 //0.12
-#define PID_POSITION_INTEGRATION_LIMIT    100.0
+#define PID_POSITION_KD  0.0 //0.12
+#define PID_POSITION_INTEGRATION_LIMIT    20.0
 
-#define PID_SPEED_KP  2.5 //3.5
-#define PID_SPEED_KI  0.01
+#define PID_SPEED_KP  2.0 //3.5
+#define PID_SPEED_KI  0.06
 #define PID_SPEED_KD  0.0 //0.12
-#define PID_SPEED_INTEGRATION_LIMIT    10.0
+#define PID_SPEED_INTEGRATION_LIMIT    20.0
 
 #define PID_CURRENT_D_KP  2.0 //3.5
 #define PID_CURRENT_D_KI  0.0
 #define PID_CURRENT_D_KD  0.0 //0.12
-#define PID_CURRENT_D_INTEGRATION_LIMIT    100.0
+#define PID_CURRENT_D_INTEGRATION_LIMIT    20.0
 
 #define PID_CURRENT_Q_KP  0.0 //3.5
 #define PID_CURRENT_Q_KI  0.0
 #define PID_CURRENT_Q_KD  0.0 //0.12
-#define PID_CURRENT_Q_INTEGRATION_LIMIT    100.0
+#define PID_CURRENT_Q_INTEGRATION_LIMIT    20.0
 
+#define _constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
 //#define DEFAULT_PID_INTEGRATION_LIMIT    5000.0
-
 /*
  * @brief the pid initialize
  */
@@ -57,5 +57,7 @@ void SpeedControllerPID(float i_desired, float i_actual, float *i_out);
  * @brief the position control pid
  */
 void PositionControllerPID(float i_desired, float i_actual, float *i_out);
+
+void SpeedControllerPIDParameterSet(float p, float i);
 
 #endif /* STEERINGENGINE_28335_V3_INC_CONTROL_H_ */

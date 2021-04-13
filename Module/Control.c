@@ -81,3 +81,8 @@ void PositionControllerPID(float i_desired, float i_actual, float *i_out)
     *i_out = pidUpdate(&PID_Position, i_actual, 1);
 }
 
+void SpeedControllerPIDParameterSet(float p, float i)
+{
+    pidSetKp(&PID_Position, p);
+    pidSetKi(&PID_Position, i);
+}

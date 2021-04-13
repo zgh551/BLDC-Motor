@@ -10,7 +10,7 @@ extern Uint16 RamfuncsLoadSize;
 
 static Uint16 cnt_500ms = 0;
 
-static Uint16 current_normal_cnt = 0,current_fault_cnt = 0;
+static Uint16 current_normal_cnt = 0,current_fault_cnt = 0, cnt_current = 0;
 //#define TERMINAL_DEBUG
 
 __interrupt void time0_isr(void);
@@ -157,11 +157,12 @@ int main(void) {
         #ifdef TERMINAL_DEBUG
         if (0x1234 == TimeDQCurrentSendFlag)
         {
-            BLDC_TreePhaseCurrent();
+//            BLDC_TreePhaseCurrent();
 //            BLDC_FeedbackCurrent();
 //            if (0x1234 == update_flag)
 //            {
 //                BLDC_TreePhaseCurrentTest(CurrentA[cnt_current], CurrentB[cnt_current], CurrentC[cnt_current]);
+//                BLDC_FeedbackCurrentTest(CurrentA[cnt_current], CurrentB[cnt_current]);
 //                cnt_current = (cnt_current + 1) % 500;
 //                if (0 == cnt_current)
 //                {

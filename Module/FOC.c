@@ -25,117 +25,63 @@
 
 
 //static float temp_a[500], temp_b[500], temp_c[500];
-static Uint16 temp_cnt = 0;
+//static Uint16 temp_cnt = 0;
 
 void CurrentProcess(float *ia, float *ib, float *ic, Uint16 step)
 {
     switch(step)
     {
+    // A相除外
     case 1:
-        // a < 0
-        *ia = -*ib - *ic;
-        break;
-
-    case 2:
-        // b > 0
-        *ia = -*ib - *ic;
-        break;
-
-    case 3:
-        // b > 0
-        *ic = -*ia - *ib;
-        break;
-
-    case 4:
-        // c > 0
-        *ic = *ib = -*ia * 0.5f;
-        break;
-
-    case 5:
-        // c > 0
-//        *ib = -*ib;
-//        *ia = -*ia;
-        *ic = *ib = -*ia * 0.5f;
-
-//        temp_a[temp_cnt] = *ia;
-//        temp_b[temp_cnt] = *ib;
-//        temp_c[temp_cnt] = *ic;
-        temp_cnt = (temp_cnt + 1) % 500;
-        break;
-
     case 6:
-        // a > 0
-        *ic = *ia = -*ib * 0.5f;
+        *ia = -*ib -*ic;
+        break;
 
+    // B相除外
+    case 2:
+    case 3:
+        *ib = -*ic -*ia;
+        break;
 
+    // C相除外
+    case 4:
+    case 5:
+        *ic = -*ib -*ia;
         break;
 
     default:
 
         break;
     }
-//    switch(step)
-//    {
-//    case 1:
-//        // a > 0
-//        *ic = *ib - *ia;
-//        *ib = -*ib;
-//        break;
-//
-//    case 2:
-//        // b > 0
-//        *ic = *ia - *ib;
-//        *ia = -*ia;
-//        break;
-//
-//    case 3:
-//        // b > 0
-//        *ia = *ic - *ib;
-//        *ic = -*ic;
-//        break;
-//
-//    case 4:
-//        // c > 0
-//        *ia = *ib - *ic;
-//        *ib = -*ib;
-//        break;
-//
-//    case 5:
-//        // c > 0
-//        *ib = *ia - *ic;
-//        *ia = -*ia;
-//        break;
-//
-//    case 6:
-//        // a > 0
-//        *ib = *ic - *ia;
-//        *ic = -*ic;
-//        break;
-//
-//    default:
-//
-//        break;
-//    }
 }
 
 void ClarkTransform(float ia, float ib, float ic, float* i_alpha, float* i_beta)
 {
     *i_alpha = ia;
     *i_beta  = INVER_SQRT_TREE * ia + 2 * INVER_SQRT_TREE * ib;
+
+//    *i_alpha = ia - 0.5 * ib - 0.5 * ic;
+//    *i_beta  = TWO_SQRT_TREE * (ib - ic);
 }
 
 
 void ParkTransform(float i_alpha, float i_beta, float theta, float* i_d, float* i_q)
 {
-    *i_d =  i_alpha * cos(theta) + i_beta * sin(theta);
-    *i_q = -i_alpha * sin(theta) + i_beta * cos(theta);
+    float s_t = sin(theta);
+    float c_t = cos(theta);
+
+    *i_d =  i_alpha * c_t + i_beta * s_t;
+    *i_q = -i_alpha * s_t + i_beta * c_t;
 }
 
 
 void InverseParkTransform(float v_d, float v_q, float theta, float* v_alpha, float* v_beta)
 {
-    *v_alpha = v_d * cos(theta) - v_q * sin(theta);
-    *v_beta  = v_d * sin(theta) + v_q * cos(theta);
+    float s_t = sin(theta);
+    float c_t = cos(theta);
+
+    *v_alpha = v_d * c_t - v_q * s_t;
+    *v_beta  = v_d * s_t + v_q * c_t;
 }
 
 Uint16 SVPWM(float v_alpha, float v_beta)
