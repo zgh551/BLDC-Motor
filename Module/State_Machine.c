@@ -147,6 +147,7 @@ void StateMachine_Init(void)
     total_sum_rotate_turn_cnt = 0;
     origin_init_angle_position = d2m_Messege.AngularPosition;
     d2m_Messege.MotorTargetPosition = 0.0f;
+    d2m_Messege.MotorActualPosition = 0.0f;
     m2d_Messege.Commond = 0;
 }
 
@@ -2069,8 +2070,8 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             {
                 target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;   // 两次的时间间隔 (s)
                 target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;   // 旋转总运行时间(s)
-                current_turn_count = m2d_Messege.RotateTurns [CurrentTurnIndex] * 1.875f; // r/s 旋转圈数/s
-                current_turn_angle_rate = current_turn_count / target_rote_time;
+                current_turn_count = m2d_Messege.RotateTurns [CurrentTurnIndex] * 1.875f; // 旋转圈数(r)
+                current_turn_angle_rate = current_turn_count / target_rote_time;// 旋转圈数/s
                 d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
                 BLDC_Start();
                 BLDC_RotateState = WaitRun;
@@ -2082,7 +2083,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             break;
 
         case WaitRun:
-            if (fabs(d2m_Messege.AngularVelocity) > 10)
+            if (fabs(d2m_Messege.AngularVelocity) > 1)
             {
                 BLDC_RotateState = Running;
             }
@@ -2147,7 +2148,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             }
             else
             {
-                m2d_Messege.TargetAngleVelocity = -10;
+                m2d_Messege.TargetAngleVelocity = -15;
             }
             // 近似零位处理
             if (m2d_Messege.Commond == APROXMT_ZERO)
@@ -2161,6 +2162,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             {
 //                PositionControllerPID(d2m_Messege.MotorTargetPosition, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
 //                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -10, 10);
+                m2d_Messege.TargetAngleVelocity = 0;
             }
             else
             {

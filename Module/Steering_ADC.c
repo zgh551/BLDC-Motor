@@ -184,29 +184,30 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 
 __interrupt void  adc_isr(void)
 {
-    float pid_output_position;
-    d2m_Messege.MotorDriver_IA = -(int16)(AdcMirror.ADCRESULT0 - 1992) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IB = -(int16)(AdcMirror.ADCRESULT1 - 1980) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IC = -(int16)(AdcMirror.ADCRESULT2 - 2049) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+//    float pid_output_position;
+    d2m_Messege.MotorDriver_IA = (int16)(AdcMirror.ADCRESULT0 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IB = (int16)(AdcMirror.ADCRESULT1 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    d2m_Messege.MotorDriver_IC = (int16)(AdcMirror.ADCRESULT2 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
 
     // update the voltage and current
-    d2m_Messege.MotorDriverVoltage = (int16)(AdcMirror.ADCRESULT3 - 4) * 0.0076171875; // adc / 4096 * 3 * 10.4
+    d2m_Messege.MotorDriverVoltage = (int16)(AdcMirror.ADCRESULT3 - 10) * 0.0076171875; // adc / 4096 * 3 * 10.4
 
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
 
 //    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
 
-
 //    SpeedControllerPIDParameterSet(m2d_Messege.TargetVd,m2d_Messege.TargetVq);
-// 位置控制
+    // 位置控制
 //    PositionControllerPID(m2d_Messege.TargetPosition, d2m_Messege.AngularPosition, &pid_output_position);
 //    SpeedControllerPID(pid_output_position, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
-// 速度控制
 
+    // 速度控制
     SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
-    d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -20, 20);
-    d2m_Messege.V_d = 0.01;//m2d_Messege.TargetVd;
+    d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -14, 14); // 20
+    d2m_Messege.V_d = 0.01;
+
+//    d2m_Messege.V_d = m2d_Messege.TargetVd;
 //    d2m_Messege.V_q = m2d_Messege.TargetVq;
 
 //    InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, m2d_Messege.TargetPosition,
