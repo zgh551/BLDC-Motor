@@ -266,28 +266,31 @@ void BLDC_CycleSend500ms(void)
 	Tdata.data[1] = d2m_Messege.MotorDriverVoltage * 5 ; // 电机驱动电压
 	d2m_Messege.MotorDriverCurrent = d2m_Messege.MotorDriver_IA + d2m_Messege.MotorDriver_IB + d2m_Messege.MotorDriver_IC;
 	Tdata.data[2] = d2m_Messege.MotorDriverCurrent * 10; // 电机驱动电流
+    #ifdef TERMINAL_DEBUG
 	temp_data = (Uint16)(d2m_Messege.MotorActualPosition * 0.5f); // 电机旋转位置 rad
+    #else
+	temp_data = (Uint16)(d2m_Messege.MotorActualPosition * 0.5f * 57.3f); // 电机旋转位置 deg
+    #endif
 //	temp_data = (Uint16)(d2m_Messege.AngularPosition * 0.5f); // 电机旋转位置 rad
 	Tdata.data[3] =  temp_data & 0x00ff; 
 	Tdata.data[4] = (temp_data >> 8) & 0x00ff; 
 
     #ifdef TERMINAL_DEBUG
-//	temp_data = (Uint16)(d2m_Messege.MotorTargetPosition * 0.5f);
-//    Tdata.data[5] =  temp_data & 0x00ff;
-//    Tdata.data[6] = (temp_data >> 8) & 0x00ff; // [-150 - 150] r/s
-
 	temp_data_i16 = (int16)(d2m_Messege.AngularVelocity * 10);
 	Tdata.data[5] =  temp_data_i16 & 0x00ff;
 	Tdata.data[6] = (temp_data_i16 >> 8) & 0x00ff; // [-150 - 150] r/s
     #else
-	temp_data =  fabsf(d2m_Messege.AngularVelocity) * 360;// 电机角速度 [0 - 54000] deg/s
+	temp_data =  fabsf(d2m_Messege.AngularVelocity) * 57.3;// 电机角速度 [0 - 54000] deg/s
 	Tdata.data[5] =  temp_data & 0x00ff;
 	Tdata.data[6] = (temp_data >> 8) & 0x00ff; //
     #endif
 
-	d2m_Messege.MotorStatus.bit.MotorDirection = d2m_Messege.AngularVelocity > 1.0e-2f ? 1 : d2m_Messege.AngularVelocity < -1.0e-2f ? 2 : 0;
-//	Tdata.data[7] = d2m_Messege.MotorStatus.all; // 电机状态参数
+    #ifdef TERMINAL_DEBUG
 	Tdata.data[7] = d2m_Messege.FaultState;
+    #else
+	d2m_Messege.MotorStatus.bit.MotorDirection = d2m_Messege.AngularVelocity > 1.0e-2f ? 1 : d2m_Messege.AngularVelocity < -1.0e-2f ? 2 : 0;
+	Tdata.data[7] = d2m_Messege.MotorStatus.all; // 电机状态参数
+    #endif
 
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
@@ -320,7 +323,15 @@ void BLDC_TelemetrySend(void)
 	d2m_Messege.ActualRotationRings = (Uint16)(d2m_Messege.MotorActualPosition/TWO_PI);
 	Tdata.data[5] = d2m_Messege.TargetRotationRings; // 目标
 	Tdata.data[6] = d2m_Messege.ActualRotationRings; // 本组电机实际旋转圈数
-	Tdata.data[7] = d2m_Messege.ThrowStatus;         // 投放状态
+
+	if(d2m_Messege.TargetRotationRings == d2m_Messege.ActualRotationRings)
+	{
+	    Tdata.data[7] = 0xBB;//d2m_Messege.ThrowStatus;         // 投放状态
+	}
+	else
+	{
+	    Tdata.data[7] = 0xCC;
+	}
 
 	Steering_Send_Byte_B(0x55);
 	Steering_Send_Byte_B(0x77);
@@ -2069,9 +2080,18 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             if (CurrentTurnIndex < TotalTurnCount)
             {
                 target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;   // 两次的时间间隔 (s)
-                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;   // 旋转总运行时间(s)
+//                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;   // 旋转总运行时间(s)
                 current_turn_count = m2d_Messege.RotateTurns [CurrentTurnIndex] * 1.875f; // 旋转圈数(r)
-                current_turn_angle_rate = current_turn_count / target_rote_time;// 旋转圈数/s
+
+                if(0 == m2d_Messege.RotateTimes [CurrentTurnIndex])
+                {
+                    current_turn_angle_rate = 93.75f;// 旋转圈数/s
+                }
+                else
+                {
+                    current_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
+                }
+
                 d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
                 BLDC_Start();
                 BLDC_RotateState = WaitRun;
