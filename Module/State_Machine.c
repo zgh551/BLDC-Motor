@@ -45,6 +45,7 @@ LowResetStop,
 WaitLowResetStop,
 WaitRun,
 Running,
+PositionControl,
 AcceleratePhase,
 UniformPhase,
 DeceleratePhase,
@@ -100,8 +101,9 @@ static float high_speed_end_position = 0.0f;
 static float current_turn_count = 0.0f; // 当前投放圈数
 static float target_rote_time = 0.0f;   // 该投放阶段所需总的时间
 static float current_turn_angle_rate = 0.0f;  // 当前投放的角速度
-
+static float max_turn_angle_rate = 0.0f;  // 最大角速度
 static float target_wait_time = 0.0f;   // 两段投放间隔时间
+static float update_delta_target_position = 0.0f;
 
 
 static float origin_init_angle_position = 0, init_angle_position,target_angle_position, total_turn_count_sum;
@@ -2082,19 +2084,26 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                 target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;   // 两次的时间间隔 (s)
 //                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;   // 旋转总运行时间(s)
                 current_turn_count = m2d_Messege.RotateTurns [CurrentTurnIndex] * 1.875f; // 旋转圈数(r)
+                update_delta_target_position = d2m_Messege.MotorTargetPosition;
+                d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
 
-                if(0 == m2d_Messege.RotateTimes [CurrentTurnIndex])
+                if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 2)
                 {
                     current_turn_angle_rate = 93.75f;// 旋转圈数/s
+                    BLDC_RotateState = WaitRun;
                 }
-                else
+                else if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 20)
                 {
                     current_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
+                    BLDC_RotateState = WaitRun;
                 }
-
-                d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
+                else // 采用位置控制方式
+                {
+                    current_turn_angle_rate = TWO_PI * 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
+                    max_turn_angle_rate = 93.75f;
+                    BLDC_RotateState = PositionControl;
+                }
                 BLDC_Start();
-                BLDC_RotateState = WaitRun;
             }
             else
             {
@@ -2115,9 +2124,43 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
 
         case Running:
             if (fabs(d2m_Messege.AngularVelocity) > 1.0e-1f)
+//            if (d2m_Messege.MotorActualPosition < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
             {
                 PositionControllerPID(d2m_Messege.MotorTargetPosition, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
                 m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -current_turn_angle_rate, current_turn_angle_rate);
+            }
+            else
+            {
+                m2d_Messege.TargetAngleVelocity = 0;
+                CurrentTurnIndex++;
+                wait_time_count = 0;
+                if(CurrentTurnIndex >= TotalTurnCount)
+                {
+                    BLDC_Stop();
+                    BLDC_RotateState = WaitStop;
+                }
+                else
+                {
+                    TelemetrySendFlag = 0xAABB;
+                    BLDC_RotateState = WaitTime;
+                }
+            }
+            break;
+
+        case PositionControl:
+            if (update_delta_target_position < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
+            {
+                update_delta_target_position += current_turn_angle_rate * 0.0001f;
+            }
+            else
+            {
+                update_delta_target_position = d2m_Messege.MotorTargetPosition;
+            }
+
+            if (d2m_Messege.MotorActualPosition < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
+            {
+                PositionControllerPID(update_delta_target_position, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
+                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -max_turn_angle_rate, max_turn_angle_rate);
             }
             else
             {
