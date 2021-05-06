@@ -223,6 +223,7 @@ __interrupt void  adc_isr(void)
 //    BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
 //    BLDC_RotateTurnControlProMaxReset(d2m_Messege.ControlPhaseState);
 
+//    BLDC_RotateTurnControlVelocityTest(d2m_Messege.ControlPhaseState);
     BLDC_RotateTurnControlVelocity(d2m_Messege.ControlPhaseState);
     // Reinitialize for next ADC sequence
     AdcRegs.ADCTRL2.bit.RST_SEQ1   = 1;         // Reset SEQ1

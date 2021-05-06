@@ -24,6 +24,12 @@
 
 #define MAX_VQ          (14.0f)
 
+// r/s2
+#define RAD_ACC         (50.0f)
+
+#define INIT_SPEED      (-5.0f)
+#define HIGHT_SPEED     (-50.0f)
+#define LOWER_SPEED     (-15.0f)
 //define the Power RX state
 typedef enum {
 HeadFirst = 0,
@@ -151,6 +157,7 @@ void StateMachine_Init(void)
     d2m_Messege.MotorTargetPosition = 0.0f;
     d2m_Messege.MotorActualPosition = 0.0f;
     m2d_Messege.Commond = 0;
+    last_angle = d2m_Messege.AngularPosition;
 }
 
 void BLDC_SelfCheck(void)
@@ -313,11 +320,11 @@ void BLDC_TelemetrySend(void)
 	Tdata.len = 8;
 	Tdata.data[0] = TELEMETRY_SEND;
 
-	temp_data = (Uint16)d2m_Messege.MotorTargetPosition * 0.5 * 57.3; // 电机目标位置
+	temp_data = (Uint16)(d2m_Messege.MotorTargetPosition * 0.5 * 57.3); // 电机目标位置
 	Tdata.data[1] =  temp_data & 0x00ff;  	
 	Tdata.data[2] = (temp_data >> 8) & 0x00ff;
 
-	temp_data = (Uint16)d2m_Messege.MotorActualPosition * 0.5 * 57.3; // 电机实际转动位置
+	temp_data = (Uint16)(d2m_Messege.MotorActualPosition * 0.5 * 57.3); // 电机实际转动位置
 	Tdata.data[3] =  temp_data & 0x00ff; 
 	Tdata.data[4] = (temp_data >> 8) & 0x00ff; 
 
@@ -2037,6 +2044,65 @@ void BLDC_RotateTurnControlProMaxReset(Uint16 phase)
     last_angle = d2m_Messege.AngularPosition;
 }
 
+void BLDC_RotateTurnControlVelocityTest(Uint16 phase)
+{
+    switch(BLDC_RotateState)
+    {
+        case WaitStart:
+            if (m2d_Messege.Commond == DELIVERRY)
+            {
+                CurrentTurnIndex = 0;
+                TotalTurnCount   = m2d_Messege.MotorRotateCount;
+                d2m_Messege.MotorStatus.bit.WorkStatus = 1;
+                m2d_Messege.Commond = 0;
+                wait_time_count = 0;
+                BLDC_RotateState = WaitTime;
+            }
+            else if (m2d_Messege.Commond == RESET)
+            {
+                BLDC_Start();
+                d2m_Messege.MotorTargetPosition = 0.0f;
+                d2m_Messege.MotorActualPosition = (m2d_Messege.LowSpeedReverseNumber + m2d_Messege.HighSpeedReverseNumber) * 1.875f * TWO_PI;//更新实际位置
+                high_speed_end_position         =  m2d_Messege.LowSpeedReverseNumber * 1.875f * TWO_PI;//更新高速结束段位置
+                m2d_Messege.Commond = 0;
+                wait_time_count = 0;
+                BLDC_RotateState = WaitTime;
+            }
+            else if (m2d_Messege.Commond == APROXMT_ZERO)
+            {
+                m2d_Messege.Commond = 0;
+                wait_time_count = 0;
+            }
+            else
+            {
+                d2m_Messege.MotorStatus.bit.WorkStatus = 0;
+                BLDC_Stop();
+            }
+            break;
+
+        case WaitTime:
+            if (wait_time_count > 1.0f)
+            {
+                BLDC_RotateState = WaitStop;
+            }
+            else
+            {
+                BLDC_Stop();
+                wait_time_count += 0.0001f;
+            }
+            break;
+
+        case WaitStop:
+            TelemetrySendFlag = 0xAABB;
+            BLDC_Stop();
+            BLDC_RotateState = WaitStart;
+            break;
+
+        default:
+
+            break;
+    }
+}
 
 void BLDC_RotateTurnControlVelocity(Uint16 phase)
 {
@@ -2065,6 +2131,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                 d2m_Messege.MotorActualPosition = (m2d_Messege.LowSpeedReverseNumber + m2d_Messege.HighSpeedReverseNumber) * 1.875f * TWO_PI;//更新实际位置
                 high_speed_end_position         =  m2d_Messege.LowSpeedReverseNumber * 1.875f * TWO_PI;//更新高速结束段位置
                 m2d_Messege.Commond = 0;
+                m2d_Messege.TargetAngleVelocity = INIT_SPEED;
                 BLDC_RotateState = HightReset;
             }
             else if (m2d_Messege.Commond == APROXMT_ZERO)
@@ -2092,15 +2159,16 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                     current_turn_angle_rate = 93.75f;// 旋转圈数/s
                     BLDC_RotateState = WaitRun;
                 }
-                else if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 20)
-                {
-                    current_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
-                    BLDC_RotateState = WaitRun;
-                }
+//                else if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 20)
+//                {
+//                    current_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
+//                    BLDC_RotateState = WaitRun;
+//                }
                 else // 采用位置控制方式
                 {
-                    current_turn_angle_rate = TWO_PI * 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
-                    max_turn_angle_rate = 93.75f;
+                    max_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];//旋转圈数/s
+                    current_turn_angle_rate = TWO_PI * max_turn_angle_rate;// deg/s
+                    max_turn_angle_rate = max_turn_angle_rate < 9.375f ? 9.375f : max_turn_angle_rate;
                     BLDC_RotateState = PositionControl;
                 }
                 BLDC_Start();
@@ -2157,7 +2225,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                 update_delta_target_position = d2m_Messege.MotorTargetPosition;
             }
 
-            if (d2m_Messege.MotorActualPosition < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
+            if (d2m_Messege.MotorActualPosition < (d2m_Messege.MotorTargetPosition - 0.1))
             {
                 PositionControllerPID(update_delta_target_position, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
                 m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -max_turn_angle_rate, max_turn_angle_rate);
@@ -2199,7 +2267,14 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             }
             else
             {
-                m2d_Messege.TargetAngleVelocity = -50;
+                if (m2d_Messege.TargetAngleVelocity < (HIGHT_SPEED + 1.0e-3f))
+                {
+                    m2d_Messege.TargetAngleVelocity = HIGHT_SPEED;
+                }
+                else
+                {
+                    m2d_Messege.TargetAngleVelocity -= RAD_ACC * 0.0001f;
+                }
             }
             break;
 
@@ -2211,7 +2286,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             }
             else
             {
-                m2d_Messege.TargetAngleVelocity = -15;
+                m2d_Messege.TargetAngleVelocity = LOWER_SPEED;
             }
             // 近似零位处理
             if (m2d_Messege.Commond == APROXMT_ZERO)

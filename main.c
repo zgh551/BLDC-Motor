@@ -118,6 +118,7 @@ int main(void) {
 
     //-System Check
     SelfCheck();
+//    send_test1();
 
     // To ensure precise timing, use write-only instructions to write to the entire register. Therefore, if any
     // of the configuration bits are changed in ConfigCpuTimer and InitCpuTimers (in DSP2833x_CpuTimers.h), the
