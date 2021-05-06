@@ -50,8 +50,8 @@ void ExternalInterruptInit(void)
 __interrupt void xint1_isr(void)
 {
     // Insert ISR Code here
-    CurrentOverLoad = 0xABCD;
-//    BLDC_Stop();
+//    CurrentOverLoad = 0xABCD;
+    BLDC_Stop();
     // To receive more interrupts from this PIE group, acknowledge this interrupt
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
