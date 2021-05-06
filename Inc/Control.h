@@ -11,7 +11,7 @@
 #include "include.h"
 
 //position control pid
-#define PID_POSITION_KP  3.0 //3.5
+#define PID_POSITION_KP  3.5 //3.5
 #define PID_POSITION_KI  0.05
 #define PID_POSITION_KD  0.0 //0.12
 #define PID_POSITION_INTEGRATION_LIMIT    20.0
