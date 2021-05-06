@@ -180,6 +180,7 @@ void BLDC_RotateTurnControlProMax(Uint16 phase);
 
 void BLDC_RotateTurnControlProMaxReset(Uint16 phase);
 
+void BLDC_RotateTurnControlVelocityTest(Uint16 phase);
 void BLDC_RotateTurnControlVelocity(Uint16 phase);
 // 基于位置控制旋转圈数
 void BLDC_RotateTurnControlPosition(Uint16 phase);
