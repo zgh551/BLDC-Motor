@@ -10,7 +10,7 @@ extern Uint16 RamfuncsLoadSize;
 
 static Uint16 cnt_500ms = 0;
 
-static Uint16 current_normal_cnt = 0,current_fault_cnt = 0, cnt_current = 0;
+//static Uint16 current_normal_cnt = 0,current_fault_cnt = 0, cnt_current = 0;
 //#define TERMINAL_DEBUG
 
 __interrupt void time0_isr(void);
@@ -147,13 +147,11 @@ int main(void) {
             BLDC_TelemetrySend();
             TelemetrySendFlag = 0;
         }
-        else
+
+        if (0xABCD == Time5msSendFlag)
         {
-            if (0xABCD == Time5msSendFlag)
-            {
-                BLDC_CycleSend500ms();
-                Time5msSendFlag = 0;
-            }
+            BLDC_CycleSend500ms();
+            Time5msSendFlag = 0;
         }
         #ifdef TERMINAL_DEBUG
         if (0x1234 == TimeDQCurrentSendFlag)
@@ -209,34 +207,34 @@ __interrupt void time0_isr(void)
 //    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
 //    BLDC_RotateTurnControlPosition(d2m_Messege.ControlPhaseState);
 
-    if (0xABCD == CurrentOverLoad)
-    {
-        if ( (d2m_Messege.MotorDriver_IA > 13.0f)
-          || (d2m_Messege.MotorDriver_IB > 13.0f)
-          || (d2m_Messege.MotorDriver_IC > 13.0f))
-        {
-            current_fault_cnt++;
-        }
-        else
-        {
-            current_normal_cnt++;
-        }
-        if (current_fault_cnt >= 2)
-        {
-            BLDC_Stop();
-            LedErr();
-            CurrentOverLoad = 0;
-        }
-        if (current_normal_cnt >= 10)
-        {
-            CurrentOverLoad = 0;
-        }
-    }
-    else
-    {
-        current_fault_cnt  = 0;
-        current_normal_cnt = 0;
-    }
+//    if (0xABCD == CurrentOverLoad)
+//    {
+//        if ( (d2m_Messege.MotorDriver_IA > 13.0f)
+//          || (d2m_Messege.MotorDriver_IB > 13.0f)
+//          || (d2m_Messege.MotorDriver_IC > 13.0f))
+//        {
+//            current_fault_cnt++;
+//        }
+//        else
+//        {
+//            current_normal_cnt++;
+//        }
+//        if (current_fault_cnt >= 2)
+//        {
+//            BLDC_Stop();
+//            LedErr();
+//            CurrentOverLoad = 0;
+//        }
+//        if (current_normal_cnt >= 10)
+//        {
+//            CurrentOverLoad = 0;
+//        }
+//    }
+//    else
+//    {
+//        current_fault_cnt  = 0;
+//        current_normal_cnt = 0;
+//    }
 
     #ifdef TERMINAL_DEBUG
     cnt_500ms = (cnt_500ms + 1) % 10;
