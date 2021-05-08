@@ -56,10 +56,11 @@ void InitEPwmBLDC(void)
     EPwm1Regs.CMPCTL.bit.LOADBMODE  = CC_CTR_ZERO;      // load on CTR=Zero
     EPwm1Regs.AQCTLA.bit.CAU        = AQ_SET;           // set actions for EPWM1A
     EPwm1Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM1A
+    EPwm1Regs.DBCTL.bit.IN_MODE     = DBA_ALL;
     EPwm1Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm1Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi complementary
-    EPwm1Regs.DBFED                 = 50;               // FED = 50 TBCLKs
-    EPwm1Regs.DBRED                 = 50;               // RED = 50 TBCLKs
+    EPwm1Regs.DBFED                 = 15;               // FED = 50 TBCLKs
+    EPwm1Regs.DBRED                 = 15;               // RED = 50 TBCLKs
 
     // EPWM Module 2 config
     EPwm2Regs.TBPRD                 = PWM_COUNT;        // Period = 900 TBCLK counts
@@ -76,10 +77,11 @@ void InitEPwmBLDC(void)
     EPwm2Regs.CMPCTL.bit.LOADBMODE  = CC_CTR_ZERO;      // load on CTR=Zero
     EPwm2Regs.AQCTLA.bit.CAU        = AQ_SET;           // set actions for EPWM2A
     EPwm2Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM2A
+    EPwm2Regs.DBCTL.bit.IN_MODE     = DBA_ALL;
     EPwm2Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm2Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi Complementary
-    EPwm2Regs.DBFED                 = 50;               // FED = 50 TBCLKs
-    EPwm2Regs.DBRED                 = 50;               // RED = 50 TBCLKs
+    EPwm2Regs.DBFED                 = 15;               // FED = 50 TBCLKs
+    EPwm2Regs.DBRED                 = 15;               // RED = 50 TBCLKs
 
     // EPWM Module 3 config
     EPwm3Regs.TBPRD                 = PWM_COUNT;        // Period = 900 TBCLK counts
@@ -96,10 +98,11 @@ void InitEPwmBLDC(void)
     EPwm3Regs.CMPCTL.bit.LOADBMODE  = CC_CTR_ZERO;      // load on CTR=Zero
     EPwm3Regs.AQCTLA.bit.CAU        = AQ_SET;           // set actions for EPWM3A
     EPwm3Regs.AQCTLA.bit.CAD        = AQ_CLEAR;         // clear actions for EPWM3A
+    EPwm3Regs.DBCTL.bit.IN_MODE     = DBA_ALL;
     EPwm3Regs.DBCTL.bit.OUT_MODE    = DB_FULL_ENABLE;   // enable Dead-band module
     EPwm3Regs.DBCTL.bit.POLSEL      = DB_ACTV_HIC;      // Active Hi complementary
-    EPwm3Regs.DBFED                 = 50;               // FED = 50 TBCLKs
-    EPwm3Regs.DBRED                 = 50;               // RED = 50 TBCLKs
+    EPwm3Regs.DBFED                 = 15;               // FED = 50 TBCLKs
+    EPwm3Regs.DBRED                 = 15;               // RED = 50 TBCLKs
 
     // Run Time (Note: Example execution of one run-time instant)
     //===========================================================
