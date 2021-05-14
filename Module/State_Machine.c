@@ -2211,7 +2211,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             }
             else
             {
-                m2d_Messege.TargetAngleVelocity = -15;
+                m2d_Messege.TargetAngleVelocity = -20;
             }
             // 近似零位处理
             if (m2d_Messege.Commond == APROXMT_ZERO)

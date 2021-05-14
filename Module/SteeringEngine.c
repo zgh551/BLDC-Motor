@@ -108,8 +108,8 @@ void InitEPwmBLDC(void)
     EPwm3Regs.CMPA.half.CMPA        = PWM_COUNT;        // adjust duty for output EPWM3A
 
 //    BLDC_ShutDown(0);// stop
-//    BLDC_Start();
-    BLDC_Stop();
+    BLDC_Start();
+//    BLDC_Stop();
 }
 
 void ePWM1_LowLevelDutyTime(float time) // us
