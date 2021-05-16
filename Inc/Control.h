@@ -10,10 +10,16 @@
 
 #include "include.h"
 
+#define POSITION_UPDATE_FREQ   10000
+#define POSITION_UPDATE_DT     (float)(1.0/POSITION_UPDATE_FREQ)
+
+#define CURRENT_UPDATE_FREQ   10000
+#define CURRENT_UPDATE_DT     (float)(1.0f / CURRENT_UPDATE_FREQ)
+
 //position control pid
-#define PID_POSITION_KP  3.0 //3.5
-#define PID_POSITION_KI  0.05
-#define PID_POSITION_KD  0.0 //0.12
+#define PID_POSITION_KP  10.0 //12位置满足，但声音大
+#define PID_POSITION_KI  0.02
+#define PID_POSITION_KD  0.04 //0.12
 #define PID_POSITION_INTEGRATION_LIMIT    20.0
 
 #define PID_SPEED_KP  1.2 //3.5
@@ -59,5 +65,6 @@ void SpeedControllerPID(float i_desired, float i_actual, float *i_out);
 void PositionControllerPID(float i_desired, float i_actual, float *i_out);
 
 void SpeedControllerPIDParameterSet(float p, float i);
+void PositionControllerPIDParameterSet(float p, float i,  float d);
 
 #endif /* STEERINGENGINE_28335_V3_INC_CONTROL_H_ */

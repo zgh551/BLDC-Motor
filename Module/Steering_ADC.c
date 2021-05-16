@@ -47,14 +47,22 @@ volatile Uint16 *DMASource;
 //static Uint16 first_enter;
 //static Uint16 angle_rate_cnt;
 
-float CurrentA[500];
-float CurrentB[500];
-float CurrentC[500];
-Uint16 index_count;
-Uint16 update_flag;
+//float CurrentA[500];
+//float CurrentB[500];
+//float CurrentC[500];
+//Uint16 index_count;
+//Uint16 update_flag;
 
-float last_a, last_b, last_c;
-float last_d, last_q;
+//Uint16 OffsetArrayCurrentA[101];
+//Uint16 OffsetArrayCurrentB[101];
+//Uint16 OffsetArrayCurrentC[101];
+//
+//static float cunrrent_a_offset_;
+//static float cunrrent_b_offset_;
+//static float cunrrent_c_offset_;
+
+//float last_a, last_b, last_c;
+//float last_d, last_q;
 //static float pid_output;
 
 void Steering_ADC_Init(void)
@@ -94,7 +102,7 @@ void Steering_ADC_Init(void)
 
 //   first_enter = 0xABCD;
 //   angle_rate_cnt = 0;
-   update_flag = 0xABCD;
+//   update_flag = 0xABCD;
 }
 
 void Steering_ADC_EPwm(void)
@@ -184,7 +192,7 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 
 __interrupt void  adc_isr(void)
 {
-//    float pid_output_position;
+    float pid_output_position;
     d2m_Messege.MotorDriver_IA = (int16)(AdcMirror.ADCRESULT0 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
     d2m_Messege.MotorDriver_IB = (int16)(AdcMirror.ADCRESULT1 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
     d2m_Messege.MotorDriver_IC = (int16)(AdcMirror.ADCRESULT2 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
@@ -195,42 +203,39 @@ __interrupt void  adc_isr(void)
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
 
-//    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
-
-//    SpeedControllerPIDParameterSet(m2d_Messege.TargetVd,m2d_Messege.TargetVq);
     // 位置控制
 //    PositionControllerPID(m2d_Messege.TargetPosition, d2m_Messege.AngularPosition, &pid_output_position);
 //    SpeedControllerPID(pid_output_position, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
 
     // 速度控制
-//    SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
-//    d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -14, 14); // 20
-//    d2m_Messege.V_d = 0.01;
+    SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
+    d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -16, 16); // 20
+    d2m_Messege.V_d = 0.01;
 
-    d2m_Messege.V_d = m2d_Messege.TargetVd;
-    d2m_Messege.V_q = m2d_Messege.TargetVq;
-
-//    InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, m2d_Messege.TargetPosition,
-//                         &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
+//    d2m_Messege.V_d = m2d_Messege.TargetVd;
+//    d2m_Messege.V_q = m2d_Messege.TargetVq;
 
     InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, d2m_Messege.AngularPosition,
                          &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
 
     d2m_Messege.ControlPhaseState = SVPWM(d2m_Messege.V_alpha, d2m_Messege.V_beta);
 
-//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlProMaxReset(d2m_Messege.ControlPhaseState);
-
-//    BLDC_RotateTurnControlVelocity(d2m_Messege.ControlPhaseState);
+    BLDC_RotateTurnControlVelocity(d2m_Messege.ControlPhaseState);
     // Reinitialize for next ADC sequence
     AdcRegs.ADCTRL2.bit.RST_SEQ1   = 1;         // Reset SEQ1
     AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;   // Acknowledge interrupt to PIE
 }
 
+//    SpeedControllerPIDParameterSet(m2d_Messege.TargetVd,m2d_Messege.TargetVq);
+//    InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, m2d_Messege.TargetPosition,
+//                         &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
 
+//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlProMaxReset(d2m_Messege.ControlPhaseState);
+//    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
 
 //    d2m_Messege.MotorDriver_IA = 0.9 * last_a + 0.1 * d2m_Messege.MotorDriver_IA;
 //    d2m_Messege.MotorDriver_IB = 0.9 * last_b + 0.1 * d2m_Messege.MotorDriver_IB;

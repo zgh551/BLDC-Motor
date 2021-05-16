@@ -63,14 +63,38 @@ typedef struct _Master2DriverMessege
 
 typedef struct _Driver2MasterMessege
 {
-	Uint16 DriverBoardCheck;		// 驱动板自检故障码
-	Uint16 MotorCheck;				// 电机自检故障码
+    union{
+        Uint16 all;
+        struct{
+            Uint16 Voltage12V : 1; // bit0 12V电压状态
+            Uint16 Voltage28V : 1; // bit1 28V电压状态
+            Uint16 CommunicationState : 1; // bit2 驱动板通信状态
+            Uint16 revert1 : 5;
+            Uint16 revert2 : 8;
+        }bit;
+    }DriverBoardCheck;// 驱动板自检故障码
+
+    union{
+        Uint16 all;
+        struct{
+            Uint16 Converter  : 1; // bit0 旋变状态
+            Uint16 MotorAngle : 1; // bit1 角度信号状态
+            Uint16 MotorAngleRate  : 1; // bit2 角速度信号状态
+            Uint16 CurrentOverload : 1; // bit3 过电流状态
+            Uint16 revert1 : 4;
+            Uint16 revert2 : 8;
+        }bit;
+    }MotorCheck;// 电机自检故障码
+
 	Uint16 SoftwareVersion_L;		// 驱动板软件版本号 low
 	Uint16 SoftwareVersion_H;		// 驱动板软件版本号 high
     union{
         Uint16 all;
         struct{
-            Uint16 revert1 : 5;
+            Uint16 Voltage12V : 1; // bit0 12V电压状态
+            Uint16 Voltage28V : 1; // bit1 28V电压状态
+            Uint16 CommunicationState : 1; // bit2 驱动板通信状态
+            Uint16 revert1 : 2; // bit3~bit4 备份
             Uint16 MotorDirection : 2;// 电机方向状态参数
             Uint16 WorkStatus : 1;// 电机工作状态参数
             Uint16 revert2 : 8;

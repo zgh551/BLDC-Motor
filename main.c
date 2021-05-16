@@ -10,7 +10,7 @@ extern Uint16 RamfuncsLoadSize;
 
 static Uint16 cnt_500ms = 0;
 
-static Uint16 current_normal_cnt = 0,current_fault_cnt = 0, cnt_current = 0;
+//static Uint16 current_normal_cnt = 0,current_fault_cnt = 0, cnt_current = 0;
 //#define TERMINAL_DEBUG
 
 __interrupt void time0_isr(void);
@@ -155,8 +155,8 @@ int main(void) {
             }
         }
         #ifdef TERMINAL_DEBUG
-        if (0x1234 == TimeDQCurrentSendFlag)
-        {
+//        if (0x1234 == TimeDQCurrentSendFlag)
+//        {
 //            BLDC_TreePhaseCurrent();
 //            BLDC_FeedbackCurrent();
 //            if (0x1234 == update_flag)
@@ -169,8 +169,8 @@ int main(void) {
 //                    update_flag = 0xABCD;
 //                }
 //            }
-            TimeDQCurrentSendFlag = 0;
-        }
+//            TimeDQCurrentSendFlag = 0;
+//        }
         #endif
 
         if (SELFCHECK == m2d_Messege.Commond)
@@ -204,39 +204,6 @@ int main(void) {
 __interrupt void time0_isr(void)
 {
     // Insert ISR Code here
-//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlPosition(d2m_Messege.ControlPhaseState);
-
-    if (0xABCD == CurrentOverLoad)
-    {
-        if ( (d2m_Messege.MotorDriver_IA > 13.0f)
-          || (d2m_Messege.MotorDriver_IB > 13.0f)
-          || (d2m_Messege.MotorDriver_IC > 13.0f))
-        {
-            current_fault_cnt++;
-        }
-        else
-        {
-            current_normal_cnt++;
-        }
-        if (current_fault_cnt >= 2)
-        {
-            BLDC_Stop();
-            LedErr();
-            CurrentOverLoad = 0;
-        }
-        if (current_normal_cnt >= 10)
-        {
-            CurrentOverLoad = 0;
-        }
-    }
-    else
-    {
-        current_fault_cnt  = 0;
-        current_normal_cnt = 0;
-    }
-
     #ifdef TERMINAL_DEBUG
     cnt_500ms = (cnt_500ms + 1) % 10;
     if(1 == cnt_500ms)
@@ -255,3 +222,35 @@ __interrupt void time0_isr(void)
 // To receive more interrupts from this PIE group, acknowledge this interrupt
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
+//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
+//    BLDC_RotateTurnControlPosition(d2m_Messege.ControlPhaseState);
+
+//    if (0xABCD == CurrentOverLoad)
+//    {
+//        if ( (d2m_Messege.MotorDriver_IA > 13.0f)
+//          || (d2m_Messege.MotorDriver_IB > 13.0f)
+//          || (d2m_Messege.MotorDriver_IC > 13.0f))
+//        {
+//            current_fault_cnt++;
+//        }
+//        else
+//        {
+//            current_normal_cnt++;
+//        }
+//        if (current_fault_cnt >= 2)
+//        {
+//            BLDC_Stop();
+//            LedErr();
+//            CurrentOverLoad = 0;
+//        }
+//        if (current_normal_cnt >= 10)
+//        {
+//            CurrentOverLoad = 0;
+//        }
+//    }
+//    else
+//    {
+//        current_fault_cnt  = 0;
+//        current_normal_cnt = 0;
+//    }

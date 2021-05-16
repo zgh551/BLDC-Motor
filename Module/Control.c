@@ -18,11 +18,7 @@
 /**
  * Position update frequency dictates the overall update frequency.
  */
-#define POSITION_UPDATE_FREQ   10000
-#define POSITION_UPDATE_DT     (float)(1.0/POSITION_UPDATE_FREQ)
 
-#define CURRENT_UPDATE_FREQ   10000
-#define CURRENT_UPDATE_DT     (float)(1.0f / CURRENT_UPDATE_FREQ)
 
 #pragma CODE_SECTION(CurrentD_ControllerPID, "ramfuncs");
 #pragma CODE_SECTION(CurrentQ_ControllerPID, "ramfuncs");
@@ -85,4 +81,12 @@ void SpeedControllerPIDParameterSet(float p, float i)
 {
     pidSetKp(&PID_Position, p);
     pidSetKi(&PID_Position, i);
+}
+
+
+void PositionControllerPIDParameterSet(float p, float i,  float d)
+{
+    pidSetKp(&PID_Position, p);
+    pidSetKi(&PID_Position, i);
+    pidSetKi(&PID_Position, d);
 }
