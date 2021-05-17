@@ -24,7 +24,7 @@
 
 #define MAX_VQ          (14.0f)
 #define ACC_RESEET      (-600.0f)
-#define ACC_DELIVERRY   (600.0f)
+#define ACC_DELIVERRY   (1600.0f)
 
 //define the Power RX state
 typedef enum {
@@ -2137,7 +2137,9 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                     PositionControllerPIDParameterSet(5.0, PID_POSITION_KI, PID_POSITION_KD);
                     BLDC_RotateState = WaitPositionRun;
                 }
+#ifdef TERMINAL_DEBUG
                 TelemetrySendFlag = 0xAABB;
+#endif
                 BLDC_Start();
             }
             else
@@ -2194,7 +2196,9 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                 }
                 else
                 {
+#ifdef TERMINAL_DEBUG
                     TelemetrySendFlag = 0xAABB;
+#endif
                     BLDC_RotateState = WaitTime;
                 }
             }
@@ -2249,7 +2253,9 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                 }
                 else
                 {
+#ifdef TERMINAL_DEBUG
                     TelemetrySendFlag = 0xAABB;
+#endif
                     BLDC_RotateState = WaitTime;
                 }
             }

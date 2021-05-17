@@ -21,7 +21,7 @@ void SelfCheck()
     d2m_Messege.MotorCheck.bit.MotorAngleRate = 0;
     d2m_Messege.MotorCheck.bit.CurrentOverload = 0;
 
-    d2m_Messege.SoftwareVersion_L = 4;  // 驱动板软件版本号 低
+    d2m_Messege.SoftwareVersion_L = 6;  // 驱动板软件版本号 低
     d2m_Messege.SoftwareVersion_H = 2;  // 驱动板软件版本号 高
 
     d2m_Messege.MotorStatus.bit.Voltage12V = 0; // 12正常
