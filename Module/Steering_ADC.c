@@ -209,7 +209,7 @@ __interrupt void  adc_isr(void)
 
     // 速度控制
     SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
-    d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -16, 16); // 20
+    d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -20, 20); // 20
     d2m_Messege.V_d = 0.01;
 
 //    d2m_Messege.V_d = m2d_Messege.TargetVd;

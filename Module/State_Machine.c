@@ -109,7 +109,9 @@ static float update_current_turn_angle_rate = 0.0f;// 更新角速度
 static float max_turn_angle_rate = 0.0f;  // 最大角速度
 static float target_wait_time = 0.0f;   // 两段投放间隔时间
 static float update_delta_target_position = 0.0f;
-
+static float bound_turn_count = 0.0f; //满足时间的圈数边界值
+static float target_turn_count = 0.0f; // 投放的目标圈数
+static float total_turn_time = 0.0f; // 投放总时间
 
 static float origin_init_angle_position = 0, init_angle_position,target_angle_position, total_turn_count_sum;
 static float last_angle;
@@ -2110,22 +2112,36 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
         case TotalTurns:
             if (CurrentTurnIndex < TotalTurnCount)
             {
-//                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;   // 旋转总运行时间(s)
-                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;   // 两次的时间间隔 (s)
-                current_turn_count = m2d_Messege.RotateTurns [CurrentTurnIndex] * 1.875f; // 旋转圈数(r)
-                update_delta_target_position = d2m_Messege.MotorTargetPosition;
+                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;     // 旋转总运行时间(s)
+                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;     // 两次的时间间隔 (s)
+                target_turn_count  = m2d_Messege.RotateTurns [CurrentTurnIndex];            // 投放旋转圈数(r)
+                current_turn_count = target_turn_count * 1.875f;                            // 电机旋转圈数(r)
+                total_turn_time = target_rote_time * target_turn_count;                     // 投放规定的总时间
+//                update_delta_target_position = d2m_Messege.MotorTargetPosition;
                 d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
 
                 //TODO
                 if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 2)
                 {
-                    current_turn_angle_rate = 93.75f;// 旋转圈数/s
+                    current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
                     PositionControllerPIDParameterSet(PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD);
                     BLDC_RotateState = WaitRun;
                 }
                 else if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 20)
                 {
-                    current_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// r/s
+                    bound_turn_count = 7.5f / (target_rote_time * target_rote_time * ACC_DELIVERRY);
+                    if(target_turn_count > bound_turn_count)
+                    {
+                        //
+                        current_turn_angle_rate = ACC_DELIVERRY * 0.5f
+                                                * (total_turn_time
+                                                - sqrtf(total_turn_time * total_turn_time
+                                                - 7.5f * target_turn_count / ACC_DELIVERRY));
+                    }
+                    else
+                    {
+                        current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
+                    }
                     PositionControllerPIDParameterSet(PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD);
                     BLDC_RotateState = WaitRun;
                 }
