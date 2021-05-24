@@ -23,7 +23,7 @@
 #define PID_POSITION_INTEGRATION_LIMIT    20.0
 
 #define PID_SPEED_KP  1.2 //3.5
-#define PID_SPEED_KI  0.01
+#define PID_SPEED_KI  0.0 //0.01
 #define PID_SPEED_KD  0.0 //0.12
 #define PID_SPEED_INTEGRATION_LIMIT    20.0
 
