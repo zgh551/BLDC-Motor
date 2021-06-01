@@ -11,6 +11,9 @@
 #pragma DATA_SECTION(Tdata, "DMARAML5");
 #pragma DATA_SECTION(m2d_Messege, "DMARAML7");
 #pragma DATA_SECTION(d2m_Messege, "DMARAML7");
+//#pragma DATA_SECTION(deli_time_data, "DMARAML6");
+//#pragma DATA_SECTION(deli_speed_data, "DMARAML6");
+
 
 #pragma CODE_SECTION(BLDC_SelfCheck, "ramfuncs");
 #pragma CODE_SECTION(CommandResponse, "ramfuncs");
@@ -23,8 +26,8 @@
 #define ONE_PI          (3.1415926535897932384626433832795)
 
 #define MAX_VQ          (14.0f)
-#define ACC_RESEET      (-600.0f)
-#define ACC_DELIVERRY   (4800.0f)
+#define ACC_RESEET      (-1200.0f)
+#define ACC_DELIVERRY   (5600.0f)
 
 //define the Power RX state
 typedef enum {
@@ -45,6 +48,8 @@ LowReset,
 LowResetUniformPhase,
 LowResetStop,
 WaitLowResetStop,
+UpdateTargetPosition,
+TeliverryWaitTime,
 WaitRun,
 Running,
 WaitPositionRun,
@@ -78,6 +83,17 @@ typedef struct _TxData{
 }TxData;
 TxData Tdata;
 
+//typedef struct _LogData{
+//    float time;
+//    float speed;
+//}LogData;
+//LogData deli_log_data[1000];
+
+//float deli_time_data[1000];
+//float deli_speed_data[1000];
+
+float deli_stage_time[5];
+
 Uint16 dat_cnt = 0;
 
 Master2DriverMessege m2d_Messege;
@@ -94,7 +110,7 @@ static Uint16 hight_turn_count = 0, lower_turn_count = 0;
 static float reset_target_angle_position, reset_total_turn_count;
 
 static float current_angle_rate = 0.0f, current_angle = 0.0f;
-static float rote_time_count = 0.0f, wait_time_count = 0.0f;
+static float rote_time_count = 0.0f, wait_time_count = 0.0f, teliverry_time_count = 0.0f, teliverry_wait_time_count = 0.0f;
 
 // 复位相关
 static Uint16 reset_current_turn_cnt = 0;
@@ -111,6 +127,8 @@ static float target_wait_time = 0.0f;   // 两段投放间隔时间
 static float update_delta_target_position = 0.0f;
 static float bound_turn_count = 0.0f; //满足时间的圈数边界值
 static float target_turn_count = 0.0f; // 投放的目标圈数
+static float target_index_turn_count = 0.0f; // 投放目标圈数索引
+
 static float total_turn_time = 0.0f; // 投放总时间
 static float delta_acc_time = 0.0f; // 加速段时间
 static float ahead_stop_distance = 0.0f; // 提前减速度距离
@@ -2114,23 +2132,22 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
         case TotalTurns:
             if (CurrentTurnIndex < TotalTurnCount)
             {
-                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;     // 旋转总运行时间(s)
-                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;     // 两次的时间间隔 (s)
+                target_rote_time   = m2d_Messege.RotateTimes [CurrentTurnIndex] * 0.01;     // 旋转总运行时间对应的间隔时间(s)
+                target_wait_time   = m2d_Messege.TimeInterval[CurrentTurnIndex] * 0.05;     // 两次投放的时间间隔 (s)
                 target_turn_count  = m2d_Messege.RotateTurns [CurrentTurnIndex];            // 投放旋转圈数(r)
                 current_turn_count = target_turn_count * 1.875f;                            // 电机旋转圈数(r)
-                total_turn_time = target_rote_time * target_turn_count;                     // 投放规定的总时间
-//                update_delta_target_position = d2m_Messege.MotorTargetPosition;
-                d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
 
                 if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 2)
                 {
                     current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
+                    d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
                     PositionControllerPIDParameterSet(PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD);
                     BLDC_RotateState = WaitRun;
                 }
                 else if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 20)
                 {
-                    bound_turn_count = 7.5f / (target_rote_time * target_rote_time * ACC_DELIVERRY);
+                    total_turn_time = target_rote_time * target_turn_count; // 投放规定的总时间
+                    bound_turn_count = 7.5f / (target_rote_time * target_rote_time * ACC_DELIVERRY);//控制边界
                     if(target_turn_count > bound_turn_count)
                     {
                         delta_acc_time = 0.5f * (total_turn_time
@@ -2144,19 +2161,20 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                         current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
                     }
                     ahead_stop_distance = 0.5f * ACC_DELIVERRY * delta_acc_time * delta_acc_time * TWO_PI;
-                    PositionControllerPIDParameterSet(15, PID_POSITION_KI, PID_POSITION_KD);
+                    PositionControllerPIDParameterSet(18, PID_POSITION_KI, PID_POSITION_KD);
+                    d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
                     BLDC_RotateState = WaitRun;
                 }
                 else // 采用位置控制方式 速度太低
                 {
-                    max_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
-                    current_turn_angle_rate = TWO_PI * max_turn_angle_rate;// rad/s
-                    max_turn_angle_rate = max_turn_angle_rate < 9.375f ? 9.375f : max_turn_angle_rate;
-                    PositionControllerPIDParameterSet(5.0, PID_POSITION_KI, PID_POSITION_KD);
-                    BLDC_RotateState = WaitPositionRun;
+                    target_index_turn_count = 0;
+                    current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
+                    PositionControllerPIDParameterSet(18.0, PID_POSITION_KI, PID_POSITION_KD);
+                    BLDC_RotateState = UpdateTargetPosition;
                 }
 #ifdef TERMINAL_DEBUG
                 TelemetrySendFlag = 0xAABB;
+                teliverry_time_count = 0.0f;
 #endif
                 BLDC_Start();
             }
@@ -2166,111 +2184,17 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             }
             break;
 
-        case WaitRun:
-            if (fabs(d2m_Messege.AngularVelocity) > 1.0f)
+        case UpdateTargetPosition:
+            if (target_index_turn_count < target_turn_count)
             {
-                BLDC_RotateState = Running;
+                target_index_turn_count += 1.0f;
+                teliverry_wait_time_count = 0.0f;
+                d2m_Messege.MotorTargetPosition += 1.875f * TWO_PI; // 快速投放一圈
+                BLDC_Start();
+                BLDC_RotateState = WaitRun;
             }
             else
             {
-                m2d_Messege.TargetAngleVelocity = update_current_turn_angle_rate = 7.0f;
-            }
-            break;
-
-        case Running:
-            if ((d2m_Messege.MotorActualPosition < (d2m_Messege.MotorTargetPosition - ahead_stop_distance))
-            && (fabs(d2m_Messege.AngularVelocity) > 0.5f))
-            {
-                if (update_current_turn_angle_rate > (current_turn_angle_rate - 1.0e-5f))
-                {
-                    update_current_turn_angle_rate = current_turn_angle_rate;
-                }
-                else
-                {
-                    update_current_turn_angle_rate += ACC_DELIVERRY * 0.0001f;
-                }
-                if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 10)
-                {
-                    //位置控制方式
-                    PositionControllerPID(d2m_Messege.MotorTargetPosition, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
-                    m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -update_current_turn_angle_rate, update_current_turn_angle_rate);
-                }
-                else
-                {
-                    // 速度控制方式
-                    m2d_Messege.TargetAngleVelocity = update_current_turn_angle_rate;
-                }
-            }
-            else
-            {
-                if(fabs(d2m_Messege.AngularVelocity) > 0.5f)
-                {
-                    if (update_current_turn_angle_rate < 1.0e-3f)
-                    {
-                        update_current_turn_angle_rate = 0.0f;
-                    }
-                    else
-                    {
-                        update_current_turn_angle_rate -= ACC_DELIVERRY * 0.0001f;
-                    }
-                    m2d_Messege.TargetAngleVelocity = update_current_turn_angle_rate;
-                }
-                else
-                {
-                    m2d_Messege.TargetAngleVelocity = 0.0f;
-                    CurrentTurnIndex++;
-                    if(CurrentTurnIndex >= TotalTurnCount)
-                    {
-                        BLDC_Stop();
-                        BLDC_RotateState = WaitStop;
-                    }
-                    else
-                    {
-                        #ifdef TERMINAL_DEBUG
-                        TelemetrySendFlag = 0xAABB;
-                        #endif
-                        wait_time_count = 0;
-                        BLDC_RotateState = WaitTime;
-                    }
-                }
-            }
-            break;
-
-        case WaitPositionRun:
-            if (update_delta_target_position < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
-            {
-                update_delta_target_position += current_turn_angle_rate * 0.0001f;
-            }
-            else
-            {
-                update_delta_target_position = d2m_Messege.MotorTargetPosition;
-            }
-
-            if (fabs(d2m_Messege.AngularVelocity) > 0.5f)
-            {
-                BLDC_RotateState = PositionControl;
-            }
-            else
-            {
-                PositionControllerPID(update_delta_target_position, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
-                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -max_turn_angle_rate, max_turn_angle_rate);
-            }
-            break;
-
-        case PositionControl:
-            if (update_delta_target_position < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
-            {
-                update_delta_target_position += current_turn_angle_rate * 0.0001f;
-            }
-            else
-            {
-                update_delta_target_position = d2m_Messege.MotorTargetPosition;
-            }
-
-            if ((d2m_Messege.MotorActualPosition > (d2m_Messege.MotorTargetPosition - 0.5f))
-            &&  (fabs(d2m_Messege.AngularVelocity) < 1.0e-3f))
-            {
-                m2d_Messege.TargetAngleVelocity = 0;
                 CurrentTurnIndex++;
                 if(CurrentTurnIndex >= TotalTurnCount)
                 {
@@ -2286,10 +2210,98 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                     BLDC_RotateState = WaitTime;
                 }
             }
+            break;
+
+        case WaitRun:
+            teliverry_wait_time_count += 0.0001f;
+            if (fabs(d2m_Messege.AngularVelocity) > 1.0f)
+            {
+                BLDC_RotateState = Running;
+            }
             else
             {
-                PositionControllerPID(update_delta_target_position, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
-                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -max_turn_angle_rate, max_turn_angle_rate);
+                m2d_Messege.TargetAngleVelocity = update_current_turn_angle_rate = 7.0f;
+            }
+            break;
+
+        case Running:
+            teliverry_time_count += 0.0001f;
+            teliverry_wait_time_count += 0.0001f;
+            if (fabs(d2m_Messege.AngularVelocity) > 0.5f)
+            {
+                if (update_current_turn_angle_rate > (current_turn_angle_rate - 1.0e-5f))
+                {
+                    update_current_turn_angle_rate = current_turn_angle_rate;
+                }
+                else
+                {
+                    update_current_turn_angle_rate += ACC_DELIVERRY * 0.0001f;
+                }
+                //位置控制方式
+                PositionControllerPID(d2m_Messege.MotorTargetPosition, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
+                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -update_current_turn_angle_rate, update_current_turn_angle_rate);
+            }
+            else
+            {
+                m2d_Messege.TargetAngleVelocity = 0.0f;
+                if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 20)
+                {
+                    deli_stage_time[CurrentTurnIndex] = teliverry_time_count;
+                    CurrentTurnIndex++;
+                    if(CurrentTurnIndex >= TotalTurnCount)
+                    {
+                        BLDC_Stop();
+                        BLDC_RotateState = WaitStop;
+                    }
+                    else
+                    {
+                        #ifdef TERMINAL_DEBUG
+                        TelemetrySendFlag = 0xAABB;
+                        #endif
+                        wait_time_count = 0;
+                        BLDC_RotateState = WaitTime;
+                    }
+                }
+                else
+                {
+                    if(target_index_turn_count < target_turn_count)
+                    {
+                        #ifdef TERMINAL_DEBUG
+                        TelemetrySendFlag = 0xAABB;
+                        #endif
+                        BLDC_RotateState = TeliverryWaitTime;
+                    }
+                    else
+                    {
+                        deli_stage_time[CurrentTurnIndex] = teliverry_time_count;
+                        CurrentTurnIndex++;
+                        if(CurrentTurnIndex >= TotalTurnCount)
+                        {
+                            BLDC_Stop();
+                            BLDC_RotateState = WaitStop;
+                        }
+                        else
+                        {
+                            #ifdef TERMINAL_DEBUG
+                            TelemetrySendFlag = 0xAABB;
+                            #endif
+                            wait_time_count = 0;
+                            BLDC_RotateState = WaitTime;
+                        }
+                    }
+                }
+            }
+            break;
+
+        case TeliverryWaitTime:
+            if (teliverry_wait_time_count < target_rote_time)
+            {
+                BLDC_Stop();
+                teliverry_wait_time_count += 0.0001f;
+            }
+            else
+            {
+                BLDC_RotateState = UpdateTargetPosition;
             }
             break;
 
@@ -2312,9 +2324,9 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             }
             else
             {
-                if (m2d_Messege.TargetAngleVelocity < (-50.0f + 1.0e-5f))
+                if (m2d_Messege.TargetAngleVelocity < (-100.0f + 1.0e-5f))
                 {
-                    m2d_Messege.TargetAngleVelocity = -50.0f;
+                    m2d_Messege.TargetAngleVelocity = -100.0f;
                 }
                 else
                 {
@@ -2338,9 +2350,9 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
             }
             else
             {
-                if (m2d_Messege.TargetAngleVelocity > (-10.0f - 1.0e-5f))
+                if (m2d_Messege.TargetAngleVelocity > (-15.0f - 1.0e-5f))
                 {
-                    m2d_Messege.TargetAngleVelocity = -10.0f;
+                    m2d_Messege.TargetAngleVelocity = -15.0f;
                 }
                 else
                 {
@@ -2390,6 +2402,121 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
     }
     last_angle = d2m_Messege.AngularPosition;
 }
+
+//                    max_turn_angle_rate = 187.5f / m2d_Messege.RotateTimes [CurrentTurnIndex];// 旋转圈数/s
+//                    current_turn_angle_rate = TWO_PI * max_turn_angle_rate;// rad/s
+//                    max_turn_angle_rate = max_turn_angle_rate < 9.375f ? 9.375f : max_turn_angle_rate;
+//                    BLDC_RotateState = WaitPositionRun;
+//            if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 10)
+//            {
+//            }
+//            else
+//            {
+//                if (d2m_Messege.MotorActualPosition < (d2m_Messege.MotorTargetPosition - ahead_stop_distance))
+//                {
+//                    if (update_current_turn_angle_rate > (current_turn_angle_rate - 1.0e-5f))
+//                    {
+//                        update_current_turn_angle_rate = current_turn_angle_rate;
+//                    }
+//                    else
+//                    {
+//                        update_current_turn_angle_rate += ACC_DELIVERRY * 0.0001f;
+//                    }
+//                    // 速度控制方式
+//                    m2d_Messege.TargetAngleVelocity = update_current_turn_angle_rate;
+//                }
+//                else
+//                {
+//                    if(fabs(d2m_Messege.AngularVelocity) > 0.5f)
+//                    {
+//                        if (update_current_turn_angle_rate < 1.0e-3f)
+//                        {
+//                            update_current_turn_angle_rate = 0.0f;
+//                        }
+//                        else
+//                        {
+//                            update_current_turn_angle_rate -= ACC_DELIVERRY * 0.0001f;
+//                        }
+//                        m2d_Messege.TargetAngleVelocity = update_current_turn_angle_rate;
+//                    }
+//                    else
+//                    {
+//                        m2d_Messege.TargetAngleVelocity = 0.0f;
+//                        CurrentTurnIndex++;
+//                        if(CurrentTurnIndex >= TotalTurnCount)
+//                        {
+//                            BLDC_Stop();
+//                            BLDC_RotateState = WaitStop;
+//                        }
+//                        else
+//                        {
+//                            #ifdef TERMINAL_DEBUG
+//                            TelemetrySendFlag = 0xAABB;
+//                            #endif
+//                            wait_time_count = 0;
+//                            BLDC_RotateState = WaitTime;
+//                        }
+//                    }
+//                }
+//            }
+
+//        case WaitPositionRun:
+//            if (update_delta_target_position < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
+//            {
+//                update_delta_target_position += current_turn_angle_rate * 0.0001f;
+//            }
+//            else
+//            {
+//                update_delta_target_position = d2m_Messege.MotorTargetPosition;
+//            }
+//
+//            if (fabs(d2m_Messege.AngularVelocity) > 0.5f)
+//            {
+//                BLDC_RotateState = PositionControl;
+//            }
+//            else
+//            {
+//                PositionControllerPID(update_delta_target_position, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
+//                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -max_turn_angle_rate, max_turn_angle_rate);
+//            }
+//            break;
+//
+//        case PositionControl:
+//            if (update_delta_target_position < (d2m_Messege.MotorTargetPosition - 1.0e-5f))
+//            {
+//                update_delta_target_position += current_turn_angle_rate * 0.0001f;
+//            }
+//            else
+//            {
+//                update_delta_target_position = d2m_Messege.MotorTargetPosition;
+//            }
+//
+//            if ((d2m_Messege.MotorActualPosition > (d2m_Messege.MotorTargetPosition - 0.5f))
+//            &&  (fabs(d2m_Messege.AngularVelocity) < 1.0e-3f))
+//            {
+//                m2d_Messege.TargetAngleVelocity = 0;
+//                CurrentTurnIndex++;
+//                if(CurrentTurnIndex >= TotalTurnCount)
+//                {
+//                    BLDC_Stop();
+//                    BLDC_RotateState = WaitStop;
+//                }
+//                else
+//                {
+//                    #ifdef TERMINAL_DEBUG
+//                    TelemetrySendFlag = 0xAABB;
+//                    #endif
+//                    wait_time_count = 0;
+//                    BLDC_RotateState = WaitTime;
+//                }
+//            }
+//            else
+//            {
+//                PositionControllerPID(update_delta_target_position, d2m_Messege.MotorActualPosition, &m2d_Messege.TargetAngleVelocity);
+//                m2d_Messege.TargetAngleVelocity = _constrain(m2d_Messege.TargetAngleVelocity, -max_turn_angle_rate, max_turn_angle_rate);
+//            }
+//            break;
+
 // 基于位置控制旋转圈数
 void BLDC_RotateTurnControlPosition(Uint16 phase)
 {

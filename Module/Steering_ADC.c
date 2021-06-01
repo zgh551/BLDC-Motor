@@ -192,7 +192,7 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 
 __interrupt void  adc_isr(void)
 {
-    float pid_output_position;
+//    float pid_output_position;
     d2m_Messege.MotorDriver_IA = (int16)(AdcMirror.ADCRESULT0 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
     d2m_Messege.MotorDriver_IB = (int16)(AdcMirror.ADCRESULT1 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
     d2m_Messege.MotorDriver_IC = (int16)(AdcMirror.ADCRESULT2 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
