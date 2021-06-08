@@ -83,15 +83,6 @@ typedef struct _TxData{
 }TxData;
 TxData Tdata;
 
-//typedef struct _LogData{
-//    float time;
-//    float speed;
-//}LogData;
-//LogData deli_log_data[1000];
-
-//float deli_time_data[1000];
-//float deli_speed_data[1000];
-
 float deli_stage_time[5];
 
 Uint16 dat_cnt = 0;

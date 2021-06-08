@@ -50,20 +50,17 @@ volatile Uint16 *DMASource;
 //float CurrentA[500];
 //float CurrentB[500];
 //float CurrentC[500];
-//Uint16 index_count;
-//Uint16 update_flag;
 
-//Uint16 OffsetArrayCurrentA[101];
-//Uint16 OffsetArrayCurrentB[101];
-//Uint16 OffsetArrayCurrentC[101];
-//
-//static float cunrrent_a_offset_;
-//static float cunrrent_b_offset_;
-//static float cunrrent_c_offset_;
+Uint16 current_index_count;
+Uint16 current_calibrate_flag;
 
-//float last_a, last_b, last_c;
-//float last_d, last_q;
-//static float pid_output;
+Uint16 OffsetArrayCurrentA;
+Uint16 OffsetArrayCurrentB;
+Uint16 OffsetArrayCurrentC;
+
+static float cunrrent_a_offset_;
+static float cunrrent_b_offset_;
+static float cunrrent_c_offset_;
 
 void Steering_ADC_Init(void)
 {
@@ -100,9 +97,16 @@ void Steering_ADC_Init(void)
 //   AdcRegs.ADCREFSEL.bit.REF_SEL = 0 ;          // Internal reference selected
 //   AdcRegs.ADCTRL1.bit.CONT_RUN = 0;          // Setup continuous run
 
-//   first_enter = 0xABCD;
-//   angle_rate_cnt = 0;
-//   update_flag = 0xABCD;
+   current_index_count = 0;
+   current_calibrate_flag = 0;
+
+   cunrrent_a_offset_ = 0.0f;
+   cunrrent_b_offset_ = 0.0f;
+   cunrrent_c_offset_ = 0.0f;
+
+   OffsetArrayCurrentA = 0;
+   OffsetArrayCurrentB = 0;
+   OffsetArrayCurrentC = 0;
 }
 
 void Steering_ADC_EPwm(void)
@@ -190,13 +194,37 @@ Uint16 Current_Value_Progress(Uint16 ADC_value)
 	return (Uint16)((ADC_temp-Current_Min_Value)*0.25);
 }
 
+void CurrentOffset(void)
+{
+
+}
+
 __interrupt void  adc_isr(void)
 {
 //    float pid_output_position;
-    d2m_Messege.MotorDriver_IA = (int16)(AdcMirror.ADCRESULT0 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IB = (int16)(AdcMirror.ADCRESULT1 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-    d2m_Messege.MotorDriver_IC = (int16)(AdcMirror.ADCRESULT2 - 223) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
-
+    if (0 == current_calibrate_flag)
+    {
+        cunrrent_a_offset_ += AdcMirror.ADCRESULT0 * 0.01f;
+        cunrrent_b_offset_ += AdcMirror.ADCRESULT1 * 0.01f;
+        cunrrent_c_offset_ += AdcMirror.ADCRESULT2 * 0.01f;
+        if (current_index_count >= 99)
+        {
+            current_calibrate_flag = 0xABCD;
+            OffsetArrayCurrentA = (Uint16)cunrrent_a_offset_;
+            OffsetArrayCurrentB = (Uint16)cunrrent_b_offset_;
+            OffsetArrayCurrentC = (Uint16)cunrrent_c_offset_;
+        }
+        else
+        {
+            current_index_count++;
+        }
+    }
+    else
+    {
+        d2m_Messege.MotorDriver_IA = (int16)(AdcMirror.ADCRESULT0 - OffsetArrayCurrentA) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+        d2m_Messege.MotorDriver_IB = (int16)(AdcMirror.ADCRESULT1 - OffsetArrayCurrentB) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+        d2m_Messege.MotorDriver_IC = (int16)(AdcMirror.ADCRESULT2 - OffsetArrayCurrentC) * 3.32919e-3; // (adc * 3.0 / 4096)  * (15 / 3.3) [A]
+    }
     // update the voltage and current
     d2m_Messege.MotorDriverVoltage = (int16)(AdcMirror.ADCRESULT3 - 10) * 0.0076171875; // adc / 4096 * 3 * 10.4
 
