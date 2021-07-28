@@ -231,17 +231,11 @@ __interrupt void  adc_isr(void)
     // read the position and velocity information
     d2m_Messege.FaultState = AD2S1210_ResultRead(&d2m_Messege.AngularPosition, &d2m_Messege.AngularVelocity);
 
-    // 位置控制
-//    PositionControllerPID(m2d_Messege.TargetPosition, d2m_Messege.AngularPosition, &pid_output_position);
-//    SpeedControllerPID(pid_output_position, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
-
     // 速度控制
     SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &d2m_Messege.V_q);//&pid_output
     d2m_Messege.V_q = _constrain(d2m_Messege.V_q, -20, 20); // 20
     d2m_Messege.V_d = 0.01;
 
-//    d2m_Messege.V_d = m2d_Messege.TargetVd;
-//    d2m_Messege.V_q = m2d_Messege.TargetVq;
 
     InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, d2m_Messege.AngularPosition,
                          &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
@@ -254,130 +248,3 @@ __interrupt void  adc_isr(void)
     AdcRegs.ADCST.bit.INT_SEQ1_CLR = 1;       // Clear INT SEQ1 bit
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;   // Acknowledge interrupt to PIE
 }
-
-//    SpeedControllerPIDParameterSet(m2d_Messege.TargetVd,m2d_Messege.TargetVq);
-//    InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, m2d_Messege.TargetPosition,
-//                         &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
-
-//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlProMax(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlProMaxReset(d2m_Messege.ControlPhaseState);
-//    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
-
-//    d2m_Messege.MotorDriver_IA = 0.9 * last_a + 0.1 * d2m_Messege.MotorDriver_IA;
-//    d2m_Messege.MotorDriver_IB = 0.9 * last_b + 0.1 * d2m_Messege.MotorDriver_IB;
-//    d2m_Messege.MotorDriver_IC = 0.9 * last_c + 0.1 * d2m_Messege.MotorDriver_IC;
-//
-//    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,
-//                   &d2m_Messege.I_alpha, &d2m_Messege.I_beta);
-//
-//    ParkTransform(d2m_Messege.I_alpha, d2m_Messege.I_beta, d2m_Messege.AngularPosition,
-//                  &d2m_Messege.I_d, &d2m_Messege.I_q);
-//    last_angle = d2m_Messege.AngularPosition;
-//    last_a = d2m_Messege.MotorDriver_IA;
-//    last_b = d2m_Messege.MotorDriver_IB;
-//    last_c = d2m_Messege.MotorDriver_IC;
-// 电流控制
-//    CurrentD_ControllerPID(m2d_Messege.TargetVd, d2m_Messege.I_d, &d2m_Messege.V_d);
-//    CurrentQ_ControllerPID(m2d_Messege.TargetVq, d2m_Messege.I_q, &d2m_Messege.V_q);
-
-//    if (update_flag == 0xABCD)
-//    {
-//        CurrentA[index_count] = d2m_Messege.I_d;
-//        CurrentB[index_count] = d2m_Messege.I_q;
-//
-//        CurrentA[index_count] = d2m_Messege.I_alpha;
-//        CurrentB[index_count] = d2m_Messege.I_beta;
-
-
-//        CurrentA[index_count] = d2m_Messege.MotorDriver_IA;
-//        CurrentB[index_count] = d2m_Messege.MotorDriver_IB;
-//        CurrentC[index_count] = d2m_Messege.MotorDriver_IC;//d2m_Messege.AngularPosition/3.0;//  ; //d2m_Messege.ControlPhaseState/3.0f;//
-//        index_count = (index_count + 1) % 500;
-//        if (index_count == 0)
-//        {
-//            update_flag = 0x1234;
-//        }
-//    }
-// Current Translate
-//    CurrentProcess(&d2m_Messege.MotorDriver_IA, &d2m_Messege.MotorDriver_IB, &d2m_Messege.MotorDriver_IC, d2m_Messege.ControlPhaseState);
-//    ClarkTransform(d2m_Messege.MotorDriver_IA, d2m_Messege.MotorDriver_IB, d2m_Messege.MotorDriver_IC,
-//                   &d2m_Messege.I_alpha, &d2m_Messege.I_beta);
-//    ParkTransform(d2m_Messege.I_alpha, d2m_Messege.I_beta, d2m_Messege.AngularPosition,
-//                  &d2m_Messege.I_d, &d2m_Messege.I_q);
-
-//    if (update_flag == 0xABCD)
-//    {
-//        CurrentA[index_count] = d2m_Messege.MotorDriver_IA;
-//        CurrentB[index_count] = d2m_Messege.MotorDriver_IB;
-//        CurrentC[index_count] = d2m_Messege.MotorDriver_IC;
-//        index_count = (index_count + 1) % 500;
-//        if (index_count == 0)
-//        {
-//            update_flag = 0x1234;
-//        }
-//    }
-
-// 位置控制
-//    PositionControllerPID(m2d_Messege.TargetPosition, d2m_Messege.AngularPosition, &m2d_Messege.TargetAngleVelocity);
-// 速度控制
-//    SpeedControllerPID(m2d_Messege.TargetAngleVelocity, d2m_Messege.AngularVelocity, &m2d_Messege.TargetVq);//&pid_output
-
-// 电流控制
-//    CurrentD_ControllerPID(m2d_Messege.TargetVd, d2m_Messege.I_d, &d2m_Messege.V_d);
-//    CurrentQ_ControllerPID(m2d_Messege.TargetVq, d2m_Messege.I_q, &d2m_Messege.V_q);
-
-//    d2m_Messege.V_d = m2d_Messege.TargetVd;
-//    d2m_Messege.V_q = m2d_Messege.TargetVq;
-
-//    d2m_Messege.V_d = 0;
-//    d2m_Messege.V_q = 6;
-
-// 角速度计算
-//    if (0xABCD == first_enter)
-//    {
-//        last_angle = d2m_Messege.AngularPosition;
-//        d2m_Messege.AngularVelocity = 0;
-//        first_enter = 0x1234;
-//    }
-//    else if (0x1234 == first_enter)
-//    {
-//        last_angle = d2m_Messege.AngularPosition;
-//        d2m_Messege.AngularVelocity = 0;
-//        first_enter = 0;
-//    }
-//    else
-//    {
-//        angle_rate_cnt++;
-//        if (fabs(d2m_Messege.AngularPosition - last_angle) > 0.03f)
-//        {
-//            if (angle_rate_cnt > 0)
-//            {
-//                d2m_Messege.AngularVelocity = (((d2m_Messege.AngularPosition - last_angle) < -3.5f) ?  6.28f :
-//                                               ((d2m_Messege.AngularPosition - last_angle) >  3.5f) ? -6.28f : 0
-//                                            +   (d2m_Messege.AngularPosition - last_angle)) * 1591.54f /  angle_rate_cnt;
-//                angle_rate_cnt = 0;
-//
-//            }
-//            else
-//            {
-//                d2m_Messege.AngularVelocity = 0;
-//            }
-//        }
-
-//        rate_temp = ((((d2m_Messege.AngularPosition - last_angle) < -5.5f) ?  6.28f :
-//                      ((d2m_Messege.AngularPosition - last_angle) >  5.5f) ? -6.28f : 0)
-//                  +    (d2m_Messege.AngularPosition - last_angle)) * 1591.54f;
-//
-//        if ((fabs(d2m_Messege.AngularVelocity - rate_temp) < 15) || (fabs(rate_temp) > 6))
-//        {
-//            d2m_Messege.AngularVelocity = rate_temp;
-//        }
-
-
-//        if (d2m_Messege.AngularVelocity < -1000)
-//        {
-//            d2m_Messege.AngularVelocity = 0;
-//        }
-//    }

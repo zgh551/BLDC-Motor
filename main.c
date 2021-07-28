@@ -15,29 +15,7 @@ static Uint16 cnt_500ms = 0;
 
 __interrupt void time0_isr(void);
 
-void PowerUpReset(void)
-{
-    Uint16 Temp_WD = 0;
-    if((SysCtrlRegs.WDCR & 0x80) == 0)//如果是上电复位
-    {
-        EALLOW;
-        Temp_WD = SysCtrlRegs.SCSR;
-        SysCtrlRegs.SCSR = (Temp_WD & 0xFE);//启动看门狗复位
-        SysCtrlRegs.WDCR = 0x00B8;
-        EDIS;
-    }
-    else
-    {
-        EALLOW;
-        SysCtrlRegs.WDCR = 0x00E8;//关闭看门狗
-        EDIS;
-    }
-}
-
-
 int main(void) {
-
-    PowerUpReset();
     // Step 1. Initialize System Control:
     InitSysCtrl();
 
@@ -222,35 +200,3 @@ __interrupt void time0_isr(void)
 // To receive more interrupts from this PIE group, acknowledge this interrupt
     PieCtrlRegs.PIEACK.all = PIEACK_GROUP1;
 }
-//    BLDC_RotateTurnControl(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlPro(d2m_Messege.ControlPhaseState);
-//    BLDC_RotateTurnControlPosition(d2m_Messege.ControlPhaseState);
-
-//    if (0xABCD == CurrentOverLoad)
-//    {
-//        if ( (d2m_Messege.MotorDriver_IA > 13.0f)
-//          || (d2m_Messege.MotorDriver_IB > 13.0f)
-//          || (d2m_Messege.MotorDriver_IC > 13.0f))
-//        {
-//            current_fault_cnt++;
-//        }
-//        else
-//        {
-//            current_normal_cnt++;
-//        }
-//        if (current_fault_cnt >= 2)
-//        {
-//            BLDC_Stop();
-//            LedErr();
-//            CurrentOverLoad = 0;
-//        }
-//        if (current_normal_cnt >= 10)
-//        {
-//            CurrentOverLoad = 0;
-//        }
-//    }
-//    else
-//    {
-//        current_fault_cnt  = 0;
-//        current_normal_cnt = 0;
-//    }
