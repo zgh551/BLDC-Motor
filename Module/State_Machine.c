@@ -180,6 +180,8 @@ void StateMachine_Init(void)
     max_turn_angle_rate = 0.0f;
     update_current_turn_angle_rate = 0.0f;
     CurrentTurnIndex = 0;
+
+    PositionControllerPIDParameterSet(PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD);
 }
 
 void BLDC_SelfCheck(void)
@@ -575,6 +577,13 @@ void CommunicationStateMachine(Uint16 Receive_Data)
                 {
                     m2d_Messege.TargetAngleVelocity = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.01f; // 目标角速度
                     m2d_Messege.TargetPosition      = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.01f; // 目标位置
+                }
+                else if (POSITION_PID == Rdata.cmd) // 目标速度和目标角度
+                {
+                    m2d_Messege.Position_P = ((int16)((Rdata.data[2] << 8) | Rdata.data[1])) * 0.01f; // P
+                    m2d_Messege.Position_I = ((int16)((Rdata.data[4] << 8) | Rdata.data[3])) * 0.01f; // I
+                    m2d_Messege.Position_D = ((int16)((Rdata.data[6] << 8) | Rdata.data[5])) * 0.01f; // D
+                    PositionControllerPIDParameterSet(m2d_Messege.Position_P, m2d_Messege.Position_I, m2d_Messege.Position_D);
                 }
 				else
 				{
@@ -2129,7 +2138,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                 {
                     current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
                     d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
-                    PositionControllerPIDParameterSet(PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD);
+//                    PositionControllerPIDParameterSet(PID_POSITION_KP, PID_POSITION_KI, PID_POSITION_KD);
                     BLDC_RotateState = WaitRun;
                 }
                 else if (m2d_Messege.RotateTimes [CurrentTurnIndex] < 20)
@@ -2149,7 +2158,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                         current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
                     }
                     ahead_stop_distance = 0.5f * ACC_DELIVERRY * delta_acc_time * delta_acc_time * TWO_PI;
-                    PositionControllerPIDParameterSet(18, PID_POSITION_KI, PID_POSITION_KD);
+//                    PositionControllerPIDParameterSet(18, PID_POSITION_KI, PID_POSITION_KD);
                     d2m_Messege.MotorTargetPosition += current_turn_count * TWO_PI;
                     BLDC_RotateState = WaitRun;
                 }
@@ -2157,7 +2166,7 @@ void BLDC_RotateTurnControlVelocity(Uint16 phase)
                 {
                     target_index_turn_count = 0;
                     current_turn_angle_rate = 187.5f;// 93.75f;// 旋转圈数/s
-                    PositionControllerPIDParameterSet(18.0, PID_POSITION_KI, PID_POSITION_KD);
+//                    PositionControllerPIDParameterSet(18.0, PID_POSITION_KI, PID_POSITION_KD);
                     BLDC_RotateState = UpdateTargetPosition;
                 }
 #ifdef TERMINAL_DEBUG

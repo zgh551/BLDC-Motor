@@ -28,6 +28,7 @@
 // user test interface
 #define TARGET_DQ       (5) // 目标DQ
 #define TARGET_SPEED    (6) // 目标目标速度
+#define POSITION_PID    (7) // 位置PID
 
 #define SELFCHECK_REACT 		(0x81) // 自检应答
 #define DELIVERRY_REACT 		(0x82) // 投放应答
@@ -57,6 +58,10 @@ typedef struct _Master2DriverMessege
 
     float TargetAngleVelocity;              // 目标角速度
     float TargetPosition;                   // 目标位置
+
+    float Position_P;              // 目标角速度
+    float Position_I;                   // 目标位置
+    float Position_D;                   // 目标位置
 
 } Master2DriverMessege; //
 
