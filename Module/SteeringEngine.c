@@ -114,10 +114,14 @@ void InitEPwmBLDC(void)
 
 void ePWM1_LowLevelDutyTime(float time) // us
 {
-    Uint16  temp_value = (Uint16)(time * TIME_COEF);
+    int16  temp_value = (int16)(time * TIME_COEF);
     if (temp_value > PWM_MAX)
     {
         EPwm1Regs.CMPA.half.CMPA = PWM_MAX; // adjust duty for output EPWM1A
+    }
+    else if (temp_value < 0)
+    {
+        EPwm1Regs.CMPA.half.CMPA = 0;
     }
     else
     {
@@ -128,10 +132,14 @@ void ePWM1_LowLevelDutyTime(float time) // us
 
 void ePWM2_LowLevelDutyTime(float time) // us
 {
-    Uint16  temp_value = (Uint16)(time * TIME_COEF);
+    int16  temp_value = (int16)(time * TIME_COEF);
     if (temp_value > PWM_MAX)
     {
         EPwm2Regs.CMPA.half.CMPA = PWM_MAX; // adjust duty for output EPWM2A
+    }
+    else if (temp_value < 0)
+    {
+        EPwm2Regs.CMPA.half.CMPA = 0;
     }
     else
     {
@@ -141,10 +149,14 @@ void ePWM2_LowLevelDutyTime(float time) // us
 
 void ePWM3_LowLevelDutyTime(float time) // us
 {
-    Uint16  temp_value = (Uint16)(time * TIME_COEF);
+    int16  temp_value = (int16)(time * TIME_COEF);
     if (temp_value > PWM_MAX)
     {
         EPwm3Regs.CMPA.half.CMPA = PWM_MAX; // adjust duty for output EPWM3A
+    }
+    else if (temp_value < 0)
+    {
+        EPwm3Regs.CMPA.half.CMPA = 0;
     }
     else
     {
