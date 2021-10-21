@@ -20,4 +20,6 @@ void InverseParkTransform(float v_d, float v_q, float theta, float* v_alpha, flo
 
 Uint16 SVPWM(float v_alpha, float v_beta);
 
+Uint16 SVPWM_V1(float v_alpha, float v_beta);
+
 #endif /* INC_FOC_H_ */

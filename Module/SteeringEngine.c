@@ -12,7 +12,7 @@
 #define CPU_FRQ_OUT     (150000000) // TBCLK = SYSCLKOUT
 #define FREQUENCY_PWM   (10000)     // PWM_Frequency
 #define PWM_COUNT       (7500)      // TBCLK / PWM_Frequency / 2  [ the preiod = 100 us -> 1us(150 count) ]
-#define TIME_COEF       (75)        // the time of
+#define TIME_COEF       (150)        // the time of
 #define PWM_MAX         (7500)
 //#define FREQUENCY_PWM   (5000)        // PWM_Frequency
 //#define PWM_COUNT       (15000)       // TBCLK / PWM_Frequency / 2  [ the preiod = 100 us -> 1us(150 count) ]

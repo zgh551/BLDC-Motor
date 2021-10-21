@@ -240,7 +240,7 @@ __interrupt void  adc_isr(void)
     InverseParkTransform(d2m_Messege.V_d, d2m_Messege.V_q, d2m_Messege.AngularPosition,
                          &d2m_Messege.V_alpha, &d2m_Messege.V_beta);
 
-    d2m_Messege.ControlPhaseState = SVPWM(d2m_Messege.V_alpha, d2m_Messege.V_beta);
+    d2m_Messege.ControlPhaseState = SVPWM_V1(d2m_Messege.V_alpha, d2m_Messege.V_beta);
 
     BLDC_RotateTurnControlVelocity(d2m_Messege.ControlPhaseState);
     // Reinitialize for next ADC sequence
